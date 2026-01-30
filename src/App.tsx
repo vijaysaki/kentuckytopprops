@@ -46,6 +46,7 @@ export default function App() {
   const [selectedServiceGroupId, setSelectedServiceGroupId] = useState("all");
   const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
+  const [productsMenuOpen, setProductsMenuOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -186,11 +187,24 @@ export default function App() {
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
+    setProductsMenuOpen(false);
     const target = document.getElementById("products");
     if (target) {
       target.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    if (!productsMenuOpen) return;
+    const handleOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest(".nav-item")) {
+        setProductsMenuOpen(false);
+      }
+    };
+    window.addEventListener("click", handleOutside);
+    return () => window.removeEventListener("click", handleOutside);
+  }, [productsMenuOpen]);
 
   return (
     <div className="site">
@@ -211,11 +225,16 @@ export default function App() {
               Home
             </a>
             <div className="nav-item">
-              <a className="nav-link" href="#products">
+              <button
+                type="button"
+                className="nav-link nav-button"
+                onClick={() => setProductsMenuOpen((prev) => !prev)}
+                aria-expanded={productsMenuOpen}
+              >
                 Products
-              </a>
+              </button>
               {categories.length > 0 && (
-                <div className="nav-dropdown">
+                <div className={productsMenuOpen ? "nav-dropdown open" : "nav-dropdown"}>
                   <button type="button" onClick={() => handleCategorySelect("all")}>
                     All Products
                   </button>

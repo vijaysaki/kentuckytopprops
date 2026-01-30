@@ -76,6 +76,19 @@ a {
   color: #0f172a;
 }
 
+.nav-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nav-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 .nav-item {
   position: relative;
   display: inline-flex;
@@ -98,8 +111,7 @@ a {
   z-index: 20;
 }
 
-.nav-item:hover .nav-dropdown,
-.nav-item:focus-within .nav-dropdown {
+.nav-dropdown.open {
   display: flex;
 }
 
