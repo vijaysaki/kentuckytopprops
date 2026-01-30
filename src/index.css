@@ -153,6 +153,35 @@ h3 {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0 2rem;
+}
+
+.chip {
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.chip.active {
+  background: #3b82f6;
+  color: white;
+  border-color: transparent;
+}
+
 .card {
   background: white;
   border-radius: 16px;

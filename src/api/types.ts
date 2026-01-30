@@ -49,10 +49,25 @@ export type ProductImage = {
   };
 };
 
+export type ProductCategory = {
+  id: string;
+  name: string;
+  slug?: string;
+  sortOrder?: number;
+  parentId?: string | null;
+};
+
+export type ProductCategoryLink = {
+  id: string;
+  category?: ProductCategory;
+};
+
 export type Product = {
   id: string;
   name: string;
   slug: string;
+  category?: ProductCategory | null;
+  categoryLinks?: ProductCategoryLink[];
   shortDescription?: string;
   descriptionHtml?: string;
   pricingMode?: string;

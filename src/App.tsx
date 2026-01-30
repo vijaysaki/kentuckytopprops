@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { fetchMenus, fetchPages, fetchProducts, fetchServices } from "./api/public";
-import type { Menu, Page, Product, Service } from "./api/types";
+import type { Menu, Page, Product, ProductCategory, Service } from "./api/types";
 
 function dollarsFromCents(cents?: string | null) {
   if (!cents) return "";
@@ -15,6 +15,17 @@ function getImageUrl(p: Product) {
   return img?.largeUrl || img?.mediumUrl || img?.spacesUrl || "";
 }
 
+function extractProductCategories(product: Product): ProductCategory[] {
+  const list: ProductCategory[] = [];
+  if (product.category) {
+    list.push(product.category);
+  }
+  for (const link of product.categoryLinks || []) {
+    if (link.category) list.push(link.category);
+  }
+  return list;
+}
+
 export default function App() {
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -22,6 +33,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
 
   useEffect(() => {
     let mounted = true;
@@ -79,6 +91,42 @@ export default function App() {
       return hay.includes(q);
     });
   }, [search, searchableItems]);
+
+  const categories = useMemo(() => {
+    const map = new Map<string, { category: ProductCategory; count: number }>();
+    products.forEach((product) => {
+      const cats = extractProductCategories(product);
+      cats.forEach((cat) => {
+        const existing = map.get(cat.id);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          map.set(cat.id, { category: cat, count: 1 });
+        }
+      });
+    });
+    return Array.from(map.values())
+      .filter((item) => item.count > 0)
+      .sort((a, b) => {
+        const sortA = a.category.sortOrder ?? 0;
+        const sortB = b.category.sortOrder ?? 0;
+        if (sortA !== sortB) return sortA - sortB;
+        return a.category.name.localeCompare(b.category.name);
+      });
+  }, [products]);
+
+  useEffect(() => {
+    if (selectedCategoryId === "all") return;
+    const exists = categories.some((item) => item.category.id === selectedCategoryId);
+    if (!exists) setSelectedCategoryId("all");
+  }, [categories, selectedCategoryId]);
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategoryId === "all") return products;
+    return products.filter((product) => {
+      return extractProductCategories(product).some((cat) => cat.id === selectedCategoryId);
+    });
+  }, [products, selectedCategoryId]);
 
   return (
     <div className="site">
@@ -183,13 +231,34 @@ export default function App() {
         <section className="section alt" id="products">
           <div className="container">
             <h2>Products</h2>
+            {categories.length > 0 && (
+              <div className="category-tabs">
+                <button
+                  className={selectedCategoryId === "all" ? "chip active" : "chip"}
+                  onClick={() => setSelectedCategoryId("all")}
+                >
+                  All
+                </button>
+                {categories.map((item) => (
+                  <button
+                    key={item.category.id}
+                    className={selectedCategoryId === item.category.id ? "chip active" : "chip"}
+                    onClick={() => setSelectedCategoryId(item.category.id)}
+                  >
+                    {item.category.name}
+                  </button>
+                ))}
+              </div>
+            )}
             {loading ? (
               <div className="muted">Loading products...</div>
             ) : products.length === 0 ? (
               <div className="muted">No products found yet.</div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="muted">No products found in this category.</div>
             ) : (
               <div className="grid">
-                {products.slice(0, 9).map((product) => (
+                {filteredProducts.map((product) => (
                   <div key={product.id} className="card">
                     {getImageUrl(product) && (
                       <div className="card-image">
