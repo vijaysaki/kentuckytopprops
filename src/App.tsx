@@ -202,8 +202,17 @@ export default function App() {
         setProductsMenuOpen(false);
       }
     };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProductsMenuOpen(false);
+      }
+    };
     window.addEventListener("click", handleOutside);
-    return () => window.removeEventListener("click", handleOutside);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("click", handleOutside);
+      window.removeEventListener("keydown", handleEscape);
+    };
   }, [productsMenuOpen]);
 
   return (
@@ -232,6 +241,7 @@ export default function App() {
                 aria-expanded={productsMenuOpen}
               >
                 Products
+                <span className={productsMenuOpen ? "nav-caret open" : "nav-caret"} />
               </button>
               {categories.length > 0 && (
                 <div className={productsMenuOpen ? "nav-dropdown open" : "nav-dropdown"}>
