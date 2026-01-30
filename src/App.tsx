@@ -45,6 +45,7 @@ export default function App() {
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedServiceGroupId, setSelectedServiceGroupId] = useState("all");
   const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
+  const [logoVisible, setLogoVisible] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -71,6 +72,11 @@ export default function App() {
   const heroPage = pages.find((p) => p.slug === "home") || pages[0];
   const aboutPage = pages.find((p) => p.slug === "about");
   const contactPage = pages.find((p) => p.slug === "contact");
+  const heroImage = useMemo(() => {
+    const fromProduct = products.find((product) => getImageUrl(product));
+    return fromProduct ? getImageUrl(fromProduct) : "";
+  }, [products]);
+  const logoSrc = "/logo.png";
 
   const searchableItems = useMemo(() => {
     const pageItems = pages.map((p) => ({
@@ -182,7 +188,16 @@ export default function App() {
     <div className="site">
       <header className="site-header">
         <div className="container header-inner">
-          <div className="logo">Kentucky Top Props</div>
+          <div className="logo">
+            {logoVisible && (
+              <img
+                src={logoSrc}
+                alt="Kentucky Top Props"
+                onError={() => setLogoVisible(false)}
+              />
+            )}
+            <span>Kentucky Top Props</span>
+          </div>
           <nav className="nav">
             {(headerMenu?.items || []).map((item) => {
               const label = item.label || item.page?.title || "Link";
@@ -228,28 +243,49 @@ export default function App() {
       <main>
         <section className="hero" id="home">
           <div className="container hero-content">
-            <div>
-              <h1>{heroPage?.title || "Kentucky Top Props"}</h1>
+            <div className="hero-copy">
+              <div className="hero-kicker">Kentucky Top Props</div>
+              <h1>{heroPage?.title || "Production-ready props, delivered fast."}</h1>
               <div
                 className="hero-text"
                 dangerouslySetInnerHTML={{ __html: heroPage?.content || "Modern prop rentals for every production." }}
               />
               <div className="hero-actions">
-                <a className="btn primary" href="#services">
-                  Explore Services
+                <a className="btn primary" href="#products">
+                  Explore Catalog
                 </a>
-                <a className="btn" href="#products">
-                  Browse Products
+                <a className="btn" href="#services">
+                  View Services
                 </a>
               </div>
+              <div className="hero-metrics">
+                <div>
+                  <strong>{products.length || 120}+</strong>
+                  <span>Props</span>
+                </div>
+                <div>
+                  <strong>{services.length || 12}+</strong>
+                  <span>Services</span>
+                </div>
+                <div>
+                  <strong>24/7</strong>
+                  <span>Support</span>
+                </div>
+              </div>
             </div>
-            <div className="hero-card">
-              <h3>Quick Highlights</h3>
-              <ul>
-                <li>Curated props & decor</li>
-                <li>Flexible service add-ons</li>
-                <li>Modern booking experience</li>
-              </ul>
+            <div className="hero-media">
+              {heroImage ? (
+                <img src={heroImage} alt="Featured prop" />
+              ) : (
+                <div className="hero-card">
+                  <h3>Quick Highlights</h3>
+                  <ul>
+                    <li>Curated props & decor</li>
+                    <li>Flexible service add-ons</li>
+                    <li>Modern booking experience</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </section>
