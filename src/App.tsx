@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, Route, Routes, useParams } from "react-router-dom";
 import "./App.css";
 import { fetchMenus, fetchPages, fetchProducts, fetchServices } from "./api/public";
-import type { Menu, Page, Product, ProductCategory, Service } from "./api/types";
+import type { Menu, Page, Product, ProductCategory, ProductImage, Service } from "./api/types";
 
 function dollarsFromCents(cents?: string | null) {
   if (!cents) return "";
@@ -13,6 +14,11 @@ function dollarsFromCents(cents?: string | null) {
 function getImageUrl(p: Product) {
   const img = p.images?.[0]?.image;
   return img?.largeUrl || img?.mediumUrl || img?.spacesUrl || "";
+}
+
+function getImageUrlFromImage(image?: ProductImage["image"]) {
+  if (!image) return "";
+  return image.largeUrl || image.mediumUrl || image.spacesUrl || image.thumbnailUrl || "";
 }
 
 function stripHtml(value?: string | null) {
@@ -33,6 +39,69 @@ function extractProductCategories(product: Product): ProductCategory[] {
     if (link.category) list.push(link.category);
   }
   return list;
+}
+
+function getProductPath(product: Product) {
+  return `/products/${product.slug || product.id}`;
+}
+
+function sortProductImages(images: ProductImage[] | undefined) {
+  if (!images?.length) return [];
+  return [...images].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+}
+
+function ProductDetail({ products }: { products: Product[] }) {
+  const { slug } = useParams();
+  const product = useMemo(() => {
+    if (!slug) return undefined;
+    return products.find((item) => item.slug === slug || item.id === slug);
+  }, [products, slug]);
+
+  if (!product) {
+    return (
+      <section className="section">
+        <div className="container">
+          <div className="muted">Product not found.</div>
+          <Link className="btn" to="/">
+            Back to home
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  const images = sortProductImages(product.images);
+
+  return (
+    <section className="section product-detail">
+      <div className="container product-detail-grid">
+        <div className="product-gallery">
+          {images.length === 0 ? (
+            <div className="product-image-placeholder">No images available.</div>
+          ) : (
+            images.map((img, index) => (
+              <div key={img.image?.spacesUrl || img.image?.largeUrl || String(index)} className="product-image">
+                <img
+                  src={getImageUrlFromImage(img.image)}
+                  alt={img.altText || img.title || product.name}
+                />
+              </div>
+            ))
+          )}
+        </div>
+        <div className="product-info">
+          <Link className="back-link" to="/">
+            ← Back to home
+          </Link>
+          <h1>{product.name}</h1>
+          {product.shortDescription && <p className="muted">{product.shortDescription}</p>}
+          {product.descriptionHtml && (
+            <div className="rich" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default function App() {
@@ -230,9 +299,9 @@ export default function App() {
             <span>Kentucky Top Props</span>
           </div>
           <nav className="nav">
-            <a className="nav-link" href="#home">
+            <Link className="nav-link" to="/">
               Home
-            </a>
+            </Link>
             <div className="nav-item">
               <button
                 type="button"
@@ -260,13 +329,13 @@ export default function App() {
                 </div>
               )}
             </div>
-            <a className="nav-link" href="#services">
+            <a className="nav-link" href="/#services">
               Services
             </a>
-            <a className="nav-link" href="#about">
+            <a className="nav-link" href="/#about">
               About
             </a>
-            <a className="nav-link" href="#contact">
+            <a className="nav-link" href="/#contact">
               Contact
             </a>
           </nav>
@@ -295,7 +364,12 @@ export default function App() {
       </header>
 
       <main>
-        <section className="hero" id="home">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <section className="hero" id="home">
           <div className="container hero-content">
             <div className="hero-copy">
               <div className="hero-kicker">Kentucky Top Props</div>
@@ -420,7 +494,7 @@ export default function App() {
             ) : (
               <div className="grid">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="card">
+                  <Link key={product.id} className="card product-card" to={getProductPath(product)}>
                     {getImageUrl(product) && (
                       <div className="card-image">
                         <img src={getImageUrl(product)} alt={product.name} />
@@ -433,7 +507,7 @@ export default function App() {
                         {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
                       </div>
                     )}
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -501,6 +575,11 @@ export default function App() {
             />
           </div>
         </section>
+              </>
+            }
+          />
+          <Route path="/products/:slug" element={<ProductDetail products={products} />} />
+        </Routes>
       </main>
 
       <footer className="site-footer">

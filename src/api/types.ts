@@ -47,6 +47,9 @@ export type Service = {
 };
 
 export type ProductImage = {
+  sortOrder?: number;
+  title?: string | null;
+  altText?: string | null;
   image?: {
     spacesUrl?: string;
     thumbnailUrl?: string;
