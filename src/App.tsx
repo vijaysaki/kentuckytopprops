@@ -47,6 +47,8 @@ export default function App() {
   const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -195,102 +197,116 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!productsMenuOpen) return;
-    const handleOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (!target?.closest(".nav-item")) {
-        setProductsMenuOpen(false);
-      }
-    };
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setProductsMenuOpen(false);
+        setSearchOpen(false);
+        setMenuOpen(false);
       }
     };
-    window.addEventListener("click", handleOutside);
     window.addEventListener("keydown", handleEscape);
     return () => {
-      window.removeEventListener("click", handleOutside);
       window.removeEventListener("keydown", handleEscape);
     };
-  }, [productsMenuOpen]);
+  }, []);
 
   return (
     <div className="site">
-      <header className="site-header">
-        <div className="container header-inner">
-          <div className="logo">
-            {logoVisible && (
-              <img
-                src={logoSrc}
-                alt="Kentucky Top Props"
-                onError={() => setLogoVisible(false)}
-              />
-            )}
-            <span>Kentucky Top Props</span>
-          </div>
-          <nav className="nav">
-            <a className="nav-link" href="#home">
-              Home
-            </a>
-            <div className="nav-item">
-              <button
-                type="button"
-                className="nav-link nav-button"
-                onClick={() => setProductsMenuOpen((prev) => !prev)}
-                aria-expanded={productsMenuOpen}
-              >
+      <header className={menuOpen ? "site-header open" : "site-header"}>
+        <a className="logo" href="#home">
+          {logoVisible && (
+            <img
+              src={logoSrc}
+              alt="Kentucky Top Props"
+              onError={() => setLogoVisible(false)}
+            />
+          )}
+          <span>Kentucky Top Props</span>
+        </a>
+        <div className="group">
+          <ul className="navigation">
+            <li>
+              <a href="#home">Home</a>
+            </li>
+            <li className={productsMenuOpen ? "has-dropdown open" : "has-dropdown"}>
+              <button type="button" onClick={() => setProductsMenuOpen((prev) => !prev)}>
                 Products
-                <span className={productsMenuOpen ? "nav-caret open" : "nav-caret"} />
               </button>
               {categories.length > 0 && (
-                <div className={productsMenuOpen ? "nav-dropdown open" : "nav-dropdown"}>
-                  <button type="button" onClick={() => handleCategorySelect("all")}>
-                    All Products
-                  </button>
-                  {categories.map((item) => (
-                    <button
-                      key={item.category.id}
-                      type="button"
-                      onClick={() => handleCategorySelect(item.category.id)}
-                    >
-                      {item.category.name}
+                <ul className="dropdown">
+                  <li>
+                    <button type="button" onClick={() => handleCategorySelect("all")}>
+                      All Products
                     </button>
+                  </li>
+                  {categories.map((item) => (
+                    <li key={item.category.id}>
+                      <button type="button" onClick={() => handleCategorySelect(item.category.id)}>
+                        {item.category.name}
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
+              )}
+            </li>
+            <li>
+              <a href="#services">Services</a>
+            </li>
+            <li>
+              <a href="#about">About</a>
+            </li>
+            <li>
+              <a href="#contact">Contact</a>
+            </li>
+          </ul>
+          <div className="search">
+            <span className="icon">
+              <ion-icon
+                name="search-outline"
+                className={searchOpen ? "searchBtn active" : "searchBtn"}
+                onClick={() => {
+                  setSearchOpen(true);
+                  setMenuOpen(false);
+                  setProductsMenuOpen(false);
+                }}
+              ></ion-icon>
+              <ion-icon
+                name="close-outline"
+                className={searchOpen ? "closeBtn active" : "closeBtn"}
+                onClick={() => setSearchOpen(false)}
+              ></ion-icon>
+            </span>
+          </div>
+          <ion-icon
+            name="menu-outline"
+            className={searchOpen ? "menuToggle hide" : "menuToggle"}
+            onClick={() => {
+              setMenuOpen((prev) => !prev);
+              setSearchOpen(false);
+              setProductsMenuOpen(false);
+            }}
+          ></ion-icon>
+        </div>
+        <div className={searchOpen ? "searchBox active" : "searchBox"}>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search Here ..."
+          />
+          {search && (
+            <div className="search-results">
+              {filteredSearch.length === 0 ? (
+                <div className="search-empty">No matches</div>
+              ) : (
+                filteredSearch.slice(0, 8).map((item) => (
+                  <div key={`${item.type}-${item.id}`} className="search-item">
+                    <span className="search-type">{item.type}</span>
+                    <span className="search-title">{item.title}</span>
+                  </div>
+                ))
               )}
             </div>
-            <a className="nav-link" href="#services">
-              Services
-            </a>
-            <a className="nav-link" href="#about">
-              About
-            </a>
-            <a className="nav-link" href="#contact">
-              Contact
-            </a>
-          </nav>
-          <div className="search">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services, products, pages..."
-            />
-            {search && (
-              <div className="search-results">
-                {filteredSearch.length === 0 ? (
-                  <div className="search-empty">No matches</div>
-                ) : (
-                  filteredSearch.slice(0, 8).map((item) => (
-                    <div key={`${item.type}-${item.id}`} className="search-item">
-                      <span className="search-type">{item.type}</span>
-                      <span className="search-title">{item.title}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </header>
 
