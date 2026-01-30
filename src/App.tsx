@@ -184,6 +184,14 @@ export default function App() {
     });
   }, [products, selectedCategoryId]);
 
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    const target = document.getElementById("products");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="site">
       <header className="site-header">
@@ -199,22 +207,39 @@ export default function App() {
             <span>Kentucky Top Props</span>
           </div>
           <nav className="nav">
-            {(headerMenu?.items || []).map((item) => {
-              const label = item.label || item.page?.title || "Link";
-              const href = item.external_url || `#${item.page?.slug || "section"}`;
-              return (
-                <a key={item.id} href={href}>
-                  {label}
-                </a>
-              );
-            })}
-            {!headerMenu && (
-              <>
-                <a href="#services">Services</a>
-                <a href="#products">Products</a>
-                <a href="#contact">Contact</a>
-              </>
-            )}
+            <a className="nav-link" href="#home">
+              Home
+            </a>
+            <div className="nav-item">
+              <a className="nav-link" href="#products">
+                Products
+              </a>
+              {categories.length > 0 && (
+                <div className="nav-dropdown">
+                  <button type="button" onClick={() => handleCategorySelect("all")}>
+                    All Products
+                  </button>
+                  {categories.map((item) => (
+                    <button
+                      key={item.category.id}
+                      type="button"
+                      onClick={() => handleCategorySelect(item.category.id)}
+                    >
+                      {item.category.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <a className="nav-link" href="#services">
+              Services
+            </a>
+            <a className="nav-link" href="#about">
+              About
+            </a>
+            <a className="nav-link" href="#contact">
+              Contact
+            </a>
           </nav>
           <div className="search">
             <input
