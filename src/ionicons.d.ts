@@ -1,9 +1,5 @@
-export {};
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "ion-icon": any;
-    }
+declare namespace JSX {
+  interface IntrinsicElements {
+    "ion-icon": any;
   }
 }
