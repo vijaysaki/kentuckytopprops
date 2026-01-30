@@ -15,6 +15,15 @@ function getImageUrl(p: Product) {
   return img?.largeUrl || img?.mediumUrl || img?.spacesUrl || "";
 }
 
+function stripHtml(value?: string | null) {
+  if (!value) return "";
+  return value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function getPageParentId(page: Page) {
+  return page.parent_id || page.parent?.id || null;
+}
+
 function extractProductCategories(product: Product): ProductCategory[] {
   const list: ProductCategory[] = [];
   if (product.category) {
@@ -34,6 +43,8 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+  const [selectedServiceGroupId, setSelectedServiceGroupId] = useState("all");
+  const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
 
   useEffect(() => {
     let mounted = true;
@@ -92,6 +103,33 @@ export default function App() {
     });
   }, [search, searchableItems]);
 
+  const serviceGroups = useMemo(() => {
+    return services
+      .filter((service) => !service.parentId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [services]);
+
+  const filteredServices = useMemo(() => {
+    if (selectedServiceGroupId === "all") return services;
+    return services.filter((service) => {
+      return service.id === selectedServiceGroupId || service.parentId === selectedServiceGroupId;
+    });
+  }, [services, selectedServiceGroupId]);
+
+  const pageGroups = useMemo(() => {
+    return pages
+      .filter((page) => !getPageParentId(page))
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [pages]);
+
+  const filteredPages = useMemo(() => {
+    if (selectedPageGroupId === "all") return pages;
+    return pages.filter((page) => {
+      const parentId = getPageParentId(page);
+      return page.id === selectedPageGroupId || parentId === selectedPageGroupId;
+    });
+  }, [pages, selectedPageGroupId]);
+
   const categories = useMemo(() => {
     const map = new Map<string, { category: ProductCategory; count: number }>();
     products.forEach((product) => {
@@ -120,6 +158,18 @@ export default function App() {
     const exists = categories.some((item) => item.category.id === selectedCategoryId);
     if (!exists) setSelectedCategoryId("all");
   }, [categories, selectedCategoryId]);
+
+  useEffect(() => {
+    if (selectedServiceGroupId === "all") return;
+    const exists = serviceGroups.some((service) => service.id === selectedServiceGroupId);
+    if (!exists) setSelectedServiceGroupId("all");
+  }, [serviceGroups, selectedServiceGroupId]);
+
+  useEffect(() => {
+    if (selectedPageGroupId === "all") return;
+    const exists = pageGroups.some((page) => page.id === selectedPageGroupId);
+    if (!exists) setSelectedPageGroupId("all");
+  }, [pageGroups, selectedPageGroupId]);
 
   const filteredProducts = useMemo(() => {
     if (selectedCategoryId === "all") return products;
@@ -206,14 +256,35 @@ export default function App() {
 
         <section className="section" id="services">
           <div className="container">
-            <h2>Services</h2>
+            <div className="section-header">
+              <h2>Services</h2>
+              {serviceGroups.length > 0 && (
+                <div className="filter">
+                  <label htmlFor="serviceFilter">Group</label>
+                  <select
+                    id="serviceFilter"
+                    value={selectedServiceGroupId}
+                    onChange={(e) => setSelectedServiceGroupId(e.target.value)}
+                  >
+                    <option value="all">All services</option>
+                    {serviceGroups.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             {loading ? (
               <div className="muted">Loading services...</div>
             ) : services.length === 0 ? (
               <div className="muted">No services found yet.</div>
+            ) : filteredServices.length === 0 ? (
+              <div className="muted">No services found in this group.</div>
             ) : (
               <div className="grid">
-                {services.map((service) => (
+                {filteredServices.map((service) => (
                   <div key={service.id} className="card">
                     <h3>{service.name}</h3>
                     <p>{service.description || "Custom service tailored for your project."}</p>
@@ -230,26 +301,26 @@ export default function App() {
 
         <section className="section alt" id="products">
           <div className="container">
-            <h2>Products</h2>
-            {categories.length > 0 && (
-              <div className="category-tabs">
-                <button
-                  className={selectedCategoryId === "all" ? "chip active" : "chip"}
-                  onClick={() => setSelectedCategoryId("all")}
-                >
-                  All
-                </button>
-                {categories.map((item) => (
-                  <button
-                    key={item.category.id}
-                    className={selectedCategoryId === item.category.id ? "chip active" : "chip"}
-                    onClick={() => setSelectedCategoryId(item.category.id)}
+            <div className="section-header">
+              <h2>Products</h2>
+              {categories.length > 0 && (
+                <div className="filter">
+                  <label htmlFor="productFilter">Category</label>
+                  <select
+                    id="productFilter"
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value)}
                   >
-                    {item.category.name}
-                  </button>
-                ))}
-              </div>
-            )}
+                    <option value="all">All categories</option>
+                    {categories.map((item) => (
+                      <option key={item.category.id} value={item.category.id}>
+                        {item.category.name} ({item.count})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             {loading ? (
               <div className="muted">Loading products...</div>
             ) : products.length === 0 ? (
@@ -272,6 +343,48 @@ export default function App() {
                         {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="section" id="pages">
+          <div className="container">
+            <div className="section-header">
+              <h2>Pages</h2>
+              {pageGroups.length > 0 && (
+                <div className="filter">
+                  <label htmlFor="pageFilter">Group</label>
+                  <select
+                    id="pageFilter"
+                    value={selectedPageGroupId}
+                    onChange={(e) => setSelectedPageGroupId(e.target.value)}
+                  >
+                    <option value="all">All pages</option>
+                    {pageGroups.map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.title || page.slug}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            {loading ? (
+              <div className="muted">Loading pages...</div>
+            ) : pages.length === 0 ? (
+              <div className="muted">No pages found yet.</div>
+            ) : filteredPages.length === 0 ? (
+              <div className="muted">No pages found in this group.</div>
+            ) : (
+              <div className="grid">
+                {filteredPages.map((page) => (
+                  <div key={page.id} className="card">
+                    <h3>{page.title || page.slug}</h3>
+                    <p>{stripHtml(page.content || "").slice(0, 140) || "No content available yet."}</p>
+                    {page.full_path && <div className="meta">{page.full_path}</div>}
                   </div>
                 ))}
               </div>

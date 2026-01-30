@@ -4,6 +4,9 @@ export type Page = {
   title?: string;
   content?: string;
   full_path?: string;
+  parent_id?: string | null;
+  parent?: Page | null;
+  sort_order?: number;
 };
 
 export type MenuItem = {
@@ -33,6 +36,9 @@ export type Service = {
   id: string;
   name: string;
   slug: string;
+  parentId?: string | null;
+  parent?: Service | null;
+  children?: Service[];
   description?: string;
   durationMinutes?: number;
   basePriceCents?: string | null;
@@ -55,6 +61,7 @@ export type ProductCategory = {
   slug?: string;
   sortOrder?: number;
   parentId?: string | null;
+  parent?: ProductCategory | null;
 };
 
 export type ProductCategoryLink = {
