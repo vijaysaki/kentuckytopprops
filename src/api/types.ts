@@ -58,6 +58,30 @@ export type ProductImage = {
   };
 };
 
+export type ContactFormField = {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: string[];
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    message?: string;
+  };
+};
+
+export type ContactForm = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  fields: ContactFormField[];
+  thankYouMessage?: string | null;
+};
+
 export type ProductCategory = {
   id: string;
   name: string;

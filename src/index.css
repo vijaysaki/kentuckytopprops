@@ -435,6 +435,78 @@ h3 {
   line-height: 1.7;
 }
 
+.contact-form {
+  margin-top: 2rem;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.contact-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.form-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-field-options {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.form-field-options legend {
+  font-weight: 600;
+  padding: 0 0.5rem;
+}
+
+.form-field-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.form-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.form-success {
+  color: #15803d;
+  font-weight: 600;
+}
+
 .site-footer {
   background: #0f172a;
   color: #e2e8f0;
