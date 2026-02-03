@@ -8,6 +8,7 @@ import {
   fetchPages,
   fetchProductBySlug,
   fetchProductCategoriesTree,
+  fetchProductCategories,
   fetchProductsPage,
   fetchServicesTree,
   flattenCategoryTree,
@@ -368,13 +369,22 @@ export default function App() {
       fetchMenus(),
       fetchServicesTree(),
       fetchProductCategoriesTree(),
+      fetchProductCategories(),
       fetchProductsPage({ page: 1, pageSize: 20 }),
     ])
-      .then(([pagesRes, menusRes, servicesTreeRes, categoriesTreeRes, productsRes]) => {
+      .then(
+        ([
+          pagesRes,
+          menusRes,
+          servicesTreeRes,
+          categoriesTreeRes,
+          categoriesFlatRes,
+          productsRes,
+        ]) => {
         if (!mounted) return;
         setPages(pagesRes || []);
         setMenus(menusRes || []);
-        const nextServicesTree = servicesTreeRes || [];
+        const nextServicesTree: Service[] = servicesTreeRes || [];
         const hasServiceChildren = nextServicesTree.some((service) => service.children?.length);
         const normalizedServicesTree =
           nextServicesTree.length && !hasServiceChildren
@@ -382,15 +392,19 @@ export default function App() {
             : nextServicesTree;
         setServicesTree(normalizedServicesTree);
         setServices(flattenServicesTree(normalizedServicesTree));
-        const nextCategoriesTree = categoriesTreeRes || [];
+        const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
+        const flatCategories: ProductCategory[] = categoriesFlatRes || [];
         const hasCategoryChildren = nextCategoriesTree.some((category) => category.children?.length);
-        const normalizedCategoriesTree =
-          nextCategoriesTree.length && !hasCategoryChildren
-            ? buildCategoryTreeFromFlat(nextCategoriesTree)
-            : nextCategoriesTree;
+        const normalizedCategoriesTree = nextCategoriesTree.length
+          ? hasCategoryChildren
+            ? nextCategoriesTree
+            : buildCategoryTreeFromFlat(nextCategoriesTree)
+          : buildCategoryTreeFromFlat(flatCategories);
         setProductCategoriesTree(normalizedCategoriesTree);
         setProductCategories(
-          normalizedCategoriesTree.length ? flattenCategoryTree(normalizedCategoriesTree) : []
+          normalizedCategoriesTree.length
+            ? flattenCategoryTree(normalizedCategoriesTree)
+            : flatCategories
         );
         setProducts(productsRes.items || []);
         setProductTotal(productsRes.total || 0);
