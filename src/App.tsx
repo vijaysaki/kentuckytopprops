@@ -836,37 +836,6 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section alt" id="products">
-          <div className="container">
-            <div className="section-header">
-              <h2>Products</h2>
-              {categories.length > 0 && (
-                <Link className="btn" to={`/products/${getCategorySlug(categories[0])}`}>
-                  Browse all categories
-                </Link>
-              )}
-            </div>
-            {loading ? (
-              <div className="muted">Loading products...</div>
-            ) : categories.length === 0 ? (
-              <div className="muted">No product categories available yet.</div>
-            ) : (
-              <div className="grid">
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    className="card product-card"
-                    to={`/products/${getCategorySlug(category)}`}
-                  >
-                    <h3>{category.name}</h3>
-                    <p>View products in this category.</p>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
         <section className="section" id="pages">
           <div className="container">
             <div className="section-header">
