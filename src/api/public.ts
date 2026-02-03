@@ -41,7 +41,12 @@ export function flattenCategoryTree(
 
 export async function fetchServicesTree(): Promise<Service[]> {
   try {
-    return await apiGet<Service[]>(withTenant("/public/services/tree"));
+    const response = await apiGet<any>(withTenant("/public/services/tree"));
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response?.results)) return response.results;
+    return [];
   } catch {
     return apiGet<Service[]>(withTenant("/public/services"));
   }
@@ -159,7 +164,12 @@ export async function fetchProductCategoriesFromProducts(options?: {
 
 export async function fetchProductCategoriesTree(): Promise<ProductCategory[]> {
   try {
-    return await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
+    const response = await apiGet<any>(withTenant("/public/products/categories"));
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response?.results)) return response.results;
+    return [];
   } catch {
     return [];
   }

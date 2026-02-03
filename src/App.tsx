@@ -89,6 +89,38 @@ function flattenServicesTree(nodes: Service[] | undefined, parentId?: string | n
   return result;
 }
 
+function buildCategoryTreeFromFlat(items: ProductCategory[]) {
+  const map = new Map<string, ProductCategory>();
+  items.forEach((item) => {
+    map.set(item.id, { ...item, children: [] });
+  });
+  const roots: ProductCategory[] = [];
+  map.forEach((item) => {
+    if (item.parentId && map.has(item.parentId)) {
+      map.get(item.parentId)!.children!.push(item);
+    } else {
+      roots.push(item);
+    }
+  });
+  return roots;
+}
+
+function buildServiceTreeFromFlat(items: Service[]) {
+  const map = new Map<string, Service>();
+  items.forEach((item) => {
+    map.set(item.id, { ...item, children: [] });
+  });
+  const roots: Service[] = [];
+  map.forEach((item) => {
+    if (item.parentId && map.has(item.parentId)) {
+      map.get(item.parentId)!.children!.push(item);
+    } else {
+      roots.push(item);
+    }
+  });
+  return roots;
+}
+
 function ProductDetail() {
   const { productSlug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
@@ -343,12 +375,22 @@ export default function App() {
         setPages(pagesRes || []);
         setMenus(menusRes || []);
         const nextServicesTree = servicesTreeRes || [];
-        setServicesTree(nextServicesTree);
-        setServices(flattenServicesTree(nextServicesTree));
+        const hasServiceChildren = nextServicesTree.some((service) => service.children?.length);
+        const normalizedServicesTree =
+          nextServicesTree.length && !hasServiceChildren
+            ? buildServiceTreeFromFlat(nextServicesTree)
+            : nextServicesTree;
+        setServicesTree(normalizedServicesTree);
+        setServices(flattenServicesTree(normalizedServicesTree));
         const nextCategoriesTree = categoriesTreeRes || [];
-        setProductCategoriesTree(nextCategoriesTree);
+        const hasCategoryChildren = nextCategoriesTree.some((category) => category.children?.length);
+        const normalizedCategoriesTree =
+          nextCategoriesTree.length && !hasCategoryChildren
+            ? buildCategoryTreeFromFlat(nextCategoriesTree)
+            : nextCategoriesTree;
+        setProductCategoriesTree(normalizedCategoriesTree);
         setProductCategories(
-          nextCategoriesTree.length ? flattenCategoryTree(nextCategoriesTree) : []
+          normalizedCategoriesTree.length ? flattenCategoryTree(normalizedCategoriesTree) : []
         );
         setProducts(productsRes.items || []);
         setProductTotal(productsRes.total || 0);
@@ -804,11 +846,19 @@ export default function App() {
               >
                 Products <span className="caret" aria-hidden="true" />
               </button>
-              {productCategoriesTree.length > 0 && (
-                <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                  {renderProductMenuItems(productCategoriesTree)}
-                </ul>
-              )}
+              <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
+                {(productCategoriesTree.length > 0
+                  ? renderProductMenuItems(productCategoriesTree)
+                  : renderProductMenuItems(productCategories)
+                ).length === 0 ? (
+                  <li className="muted">No categories yet.</li>
+                ) : (
+                  (productCategoriesTree.length > 0
+                    ? renderProductMenuItems(productCategoriesTree)
+                    : renderProductMenuItems(productCategories)
+                  )
+                )}
+              </ul>
             </li>
             <li className="dropdown nav-item">
               <button
@@ -822,7 +872,12 @@ export default function App() {
                 Services <span className="caret" aria-hidden="true" />
               </button>
               <ul className={servicesMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                {renderServiceMenuItems(servicesTree)}
+                {(servicesTree.length > 0 ? renderServiceMenuItems(servicesTree) : renderServiceMenuItems(services))
+                  .length === 0 ? (
+                  <li className="muted">No services yet.</li>
+                ) : (
+                  (servicesTree.length > 0 ? renderServiceMenuItems(servicesTree) : renderServiceMenuItems(services))
+                )}
               </ul>
             </li>
             <li>
@@ -848,13 +903,21 @@ export default function App() {
                     <summary>
                       Products <span className="caret" aria-hidden="true" />
                     </summary>
-                    <div className="mchildren">{renderProductMobileDetails(productCategoriesTree)}</div>
+                    <div className="mchildren">
+                      {productCategoriesTree.length > 0
+                        ? renderProductMobileDetails(productCategoriesTree)
+                        : renderProductMobileDetails(productCategories)}
+                    </div>
                   </details>
                   <details>
                     <summary>
                       Services <span className="caret" aria-hidden="true" />
                     </summary>
-                    <div className="mchildren">{renderServiceMobileDetails(servicesTree)}</div>
+                    <div className="mchildren">
+                      {servicesTree.length > 0
+                        ? renderServiceMobileDetails(servicesTree)
+                        : renderServiceMobileDetails(services)}
+                    </div>
                   </details>
                   <a href="/#about" onClick={handleMobileLinkClick}>
                     About
