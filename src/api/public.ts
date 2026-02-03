@@ -23,7 +23,7 @@ function flattenServicesTree(nodes: Service[] | undefined, parentId?: string | n
   return result;
 }
 
-function flattenCategoryTree(
+export function flattenCategoryTree(
   nodes: ProductCategory[] | undefined,
   parentId?: string | null
 ): ProductCategory[] {
@@ -39,16 +39,20 @@ function flattenCategoryTree(
   return result;
 }
 
+export async function fetchServicesTree(): Promise<Service[]> {
+  try {
+    return await apiGet<Service[]>(withTenant("/public/services/tree"));
+  } catch {
+    return apiGet<Service[]>(withTenant("/public/services"));
+  }
+}
+
 export async function fetchServices(): Promise<Service[]> {
   try {
-    const tree = await apiGet<Service[]>(withTenant("/public/services/tree"));
+    const tree = await fetchServicesTree();
     return flattenServicesTree(tree);
   } catch {
-    try {
-      return await apiGet<Service[]>(withTenant("/public/services"));
-    } catch {
-      return [];
-    }
+    return [];
   }
 }
 
@@ -153,10 +157,19 @@ export async function fetchProductCategoriesFromProducts(options?: {
   return Array.from(categories.values());
 }
 
+export async function fetchProductCategoriesTree(): Promise<ProductCategory[]> {
+  try {
+    return await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchProductCategories(): Promise<ProductCategory[]> {
   try {
-    const tree = await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
-    return flattenCategoryTree(tree);
+    const tree = await fetchProductCategoriesTree();
+    if (tree.length) return flattenCategoryTree(tree);
+    return fetchProductCategoriesFromProducts();
   } catch {
     return fetchProductCategoriesFromProducts();
   }

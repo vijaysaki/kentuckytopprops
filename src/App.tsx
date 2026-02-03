@@ -7,9 +7,10 @@ import {
   fetchMenus,
   fetchPages,
   fetchProductBySlug,
-  fetchProductCategories,
+  fetchProductCategoriesTree,
   fetchProductsPage,
-  fetchServices,
+  fetchServicesTree,
+  flattenCategoryTree,
   submitContactForm,
 } from "./api/public";
 import type {
@@ -73,6 +74,19 @@ function sortProductImages(images: ProductImage[] | undefined) {
 function getDefaultFieldValue(field: ContactFormField) {
   if (field.type === "checkbox") return [];
   return "";
+}
+
+function flattenServicesTree(nodes: Service[] | undefined, parentId?: string | null): Service[] {
+  if (!nodes?.length) return [];
+  const result: Service[] = [];
+  nodes.forEach((node) => {
+    const normalized: Service = parentId && !node.parentId ? { ...node, parentId } : node;
+    result.push(normalized);
+    if (node.children?.length) {
+      result.push(...flattenServicesTree(node.children, node.id));
+    }
+  });
+  return result;
 }
 
 function ProductDetail() {
@@ -289,9 +303,11 @@ export default function App() {
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [servicesTree, setServicesTree] = useState<Service[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [productTotal, setProductTotal] = useState(0);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
+  const [productCategoriesTree, setProductCategoriesTree] = useState<ProductCategory[]>([]);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -318,16 +334,22 @@ export default function App() {
     Promise.all([
       fetchPages(),
       fetchMenus(),
-      fetchServices(),
-      fetchProductCategories(),
+      fetchServicesTree(),
+      fetchProductCategoriesTree(),
       fetchProductsPage({ page: 1, pageSize: 20 }),
     ])
-      .then(([pagesRes, menusRes, servicesRes, categoriesRes, productsRes]) => {
+      .then(([pagesRes, menusRes, servicesTreeRes, categoriesTreeRes, productsRes]) => {
         if (!mounted) return;
         setPages(pagesRes || []);
         setMenus(menusRes || []);
-        setServices(servicesRes || []);
-        setProductCategories(categoriesRes || []);
+        const nextServicesTree = servicesTreeRes || [];
+        setServicesTree(nextServicesTree);
+        setServices(flattenServicesTree(nextServicesTree));
+        const nextCategoriesTree = categoriesTreeRes || [];
+        setProductCategoriesTree(nextCategoriesTree);
+        setProductCategories(
+          nextCategoriesTree.length ? flattenCategoryTree(nextCategoriesTree) : []
+        );
         setProducts(productsRes.items || []);
         setProductTotal(productsRes.total || 0);
       })
@@ -660,6 +682,96 @@ export default function App() {
     setServicesMenuOpen(false);
   };
 
+  const renderProductMenuItems = (nodes: ProductCategory[]) => {
+    return nodes.map((category) => {
+      const slug = getCategorySlug(category);
+      const children = category.children || [];
+      if (children.length > 0) {
+        return (
+          <li key={category.id} className="dropdown">
+            <Link to={`/products/${slug}`} onClick={handleMobileLinkClick}>
+              {category.name} <span className="caret" aria-hidden="true" />
+            </Link>
+            <ul className="dropdown-menu">{renderProductMenuItems(children)}</ul>
+          </li>
+        );
+      }
+      return (
+        <li key={category.id}>
+          <Link to={`/products/${slug}`} onClick={handleMobileLinkClick}>
+            {category.name}
+          </Link>
+        </li>
+      );
+    });
+  };
+
+  const renderServiceMenuItems = (nodes: Service[]) => {
+    return nodes.map((service) => {
+      const children = service.children || [];
+      if (children.length > 0) {
+        return (
+          <li key={service.id} className="dropdown">
+            <a href="/#services" onClick={handleMobileLinkClick}>
+              {service.name} <span className="caret" aria-hidden="true" />
+            </a>
+            <ul className="dropdown-menu">{renderServiceMenuItems(children)}</ul>
+          </li>
+        );
+      }
+      return (
+        <li key={service.id}>
+          <a href="/#services" onClick={handleMobileLinkClick}>
+            {service.name}
+          </a>
+        </li>
+      );
+    });
+  };
+
+  const renderProductMobileDetails = (nodes: ProductCategory[]) => {
+    return nodes.map((category) => {
+      const slug = getCategorySlug(category);
+      const children = category.children || [];
+      if (children.length > 0) {
+        return (
+          <details key={category.id}>
+            <summary>
+              {category.name} <span className="caret" aria-hidden="true" />
+            </summary>
+            <div className="mchildren">{renderProductMobileDetails(children)}</div>
+          </details>
+        );
+      }
+      return (
+        <Link key={category.id} to={`/products/${slug}`} onClick={handleMobileLinkClick}>
+          {category.name}
+        </Link>
+      );
+    });
+  };
+
+  const renderServiceMobileDetails = (nodes: Service[]) => {
+    return nodes.map((service) => {
+      const children = service.children || [];
+      if (children.length > 0) {
+        return (
+          <details key={service.id}>
+            <summary>
+              {service.name} <span className="caret" aria-hidden="true" />
+            </summary>
+            <div className="mchildren">{renderServiceMobileDetails(children)}</div>
+          </details>
+        );
+      }
+      return (
+        <a key={service.id} href="/#services" onClick={handleMobileLinkClick}>
+          {service.name}
+        </a>
+      );
+    });
+  };
+
   return (
     <div className="site">
       <header className={mobileMenuOpen ? "site-header open" : "site-header"}>
@@ -692,18 +804,9 @@ export default function App() {
               >
                 Products <span className="caret" aria-hidden="true" />
               </button>
-              {categories.length > 0 && (
+              {productCategoriesTree.length > 0 && (
                 <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                  {categories.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        to={`/products/${getCategorySlug(item)}`}
-                        onClick={handleMobileLinkClick}
-                      >
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
+                  {renderProductMenuItems(productCategoriesTree)}
                 </ul>
               )}
             </li>
@@ -719,18 +822,7 @@ export default function App() {
                 Services <span className="caret" aria-hidden="true" />
               </button>
               <ul className={servicesMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                <li>
-                  <a href="/#services" onClick={handleMobileLinkClick}>
-                    All Services
-                  </a>
-                </li>
-                {services.map((service) => (
-                  <li key={service.id}>
-                    <a href="/#services" onClick={handleMobileLinkClick}>
-                      {service.name}
-                    </a>
-                  </li>
-                ))}
+                {renderServiceMenuItems(servicesTree)}
               </ul>
             </li>
             <li>
@@ -756,32 +848,13 @@ export default function App() {
                     <summary>
                       Products <span className="caret" aria-hidden="true" />
                     </summary>
-                    <div className="mchildren">
-                      {categories.map((item) => (
-                        <Link
-                          key={item.id}
-                          to={`/products/${getCategorySlug(item)}`}
-                          onClick={handleMobileLinkClick}
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
+                    <div className="mchildren">{renderProductMobileDetails(productCategoriesTree)}</div>
                   </details>
                   <details>
                     <summary>
                       Services <span className="caret" aria-hidden="true" />
                     </summary>
-                    <div className="mchildren">
-                      <a href="/#services" onClick={handleMobileLinkClick}>
-                        All Services
-                      </a>
-                      {services.map((service) => (
-                        <a key={service.id} href="/#services" onClick={handleMobileLinkClick}>
-                          {service.name}
-                        </a>
-                      ))}
-                    </div>
+                    <div className="mchildren">{renderServiceMobileDetails(servicesTree)}</div>
                   </details>
                   <a href="/#about" onClick={handleMobileLinkClick}>
                     About
