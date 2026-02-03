@@ -332,6 +332,19 @@ function ProductsIndexPage({ categories }: { categories: ProductCategory[] }) {
   );
 }
 
+function AdminRedirect() {
+  useEffect(() => {
+    window.location.replace("https://admin.adeptlogics.com");
+  }, []);
+  return (
+    <section className="section">
+      <div className="container">
+        <div className="muted">Redirecting to admin...</div>
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -1263,6 +1276,7 @@ export default function App() {
           <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
           <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
+          <Route path="/admin" element={<AdminRedirect />} />
         </Routes>
       </main>
 
