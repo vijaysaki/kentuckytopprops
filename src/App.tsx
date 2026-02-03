@@ -341,6 +341,8 @@ export default function App() {
   const [productTotal, setProductTotal] = useState(0);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [productCategoriesTree, setProductCategoriesTree] = useState<ProductCategory[]>([]);
+  const [productCategoriesLoading, setProductCategoriesLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -392,6 +394,7 @@ export default function App() {
             : nextServicesTree;
         setServicesTree(normalizedServicesTree);
         setServices(flattenServicesTree(normalizedServicesTree));
+        setServicesLoading(false);
         const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
         const flatCategories: ProductCategory[] = categoriesFlatRes || [];
         const hasCategoryChildren = nextCategoriesTree.some((category) => category.children?.length);
@@ -406,6 +409,7 @@ export default function App() {
             ? flattenCategoryTree(normalizedCategoriesTree)
             : flatCategories
         );
+        setProductCategoriesLoading(false);
         setProducts(productsRes.items || []);
         setProductTotal(productsRes.total || 0);
       })
@@ -861,16 +865,16 @@ export default function App() {
                 Products <span className="caret" aria-hidden="true" />
               </button>
               <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                {(productCategoriesTree.length > 0
-                  ? renderProductMenuItems(productCategoriesTree)
-                  : renderProductMenuItems(productCategories)
-                ).length === 0 ? (
-                  <li className="muted">No categories yet.</li>
+                {productCategoriesLoading ? (
+                  <li className="muted">Loading...</li>
                 ) : (
-                  (productCategoriesTree.length > 0
-                    ? renderProductMenuItems(productCategoriesTree)
-                    : renderProductMenuItems(productCategories)
-                  )
+                  (() => {
+                    const items =
+                      productCategoriesTree.length > 0
+                        ? renderProductMenuItems(productCategoriesTree)
+                        : renderProductMenuItems(productCategories);
+                    return items.length === 0 ? <li className="muted">No categories yet.</li> : items;
+                  })()
                 )}
               </ul>
             </li>
@@ -886,11 +890,16 @@ export default function App() {
                 Services <span className="caret" aria-hidden="true" />
               </button>
               <ul className={servicesMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                {(servicesTree.length > 0 ? renderServiceMenuItems(servicesTree) : renderServiceMenuItems(services))
-                  .length === 0 ? (
-                  <li className="muted">No services yet.</li>
+                {servicesLoading ? (
+                  <li className="muted">Loading...</li>
                 ) : (
-                  (servicesTree.length > 0 ? renderServiceMenuItems(servicesTree) : renderServiceMenuItems(services))
+                  (() => {
+                    const items =
+                      servicesTree.length > 0
+                        ? renderServiceMenuItems(servicesTree)
+                        : renderServiceMenuItems(services);
+                    return items.length === 0 ? <li className="muted">No services yet.</li> : items;
+                  })()
                 )}
               </ul>
             </li>
