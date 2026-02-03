@@ -138,6 +138,7 @@ export default function App() {
   const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
+  const [servicesMenuOpen, setServicesMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactForm, setContactForm] = useState<ContactForm | null>(null);
@@ -218,26 +219,14 @@ export default function App() {
   const logoSrc = "/logo.png";
 
   const searchableItems = useMemo(() => {
-    const pageItems = pages.map((p) => ({
-      id: p.id,
-      type: "Page",
-      title: p.title || p.slug,
-      content: p.content || "",
-    }));
-    const serviceItems = services.map((s) => ({
-      id: s.id,
-      type: "Service",
-      title: s.name,
-      content: s.description || "",
-    }));
-    const productItems = products.map((p) => ({
-      id: p.id,
+    return products.map((product) => ({
+      id: product.id,
       type: "Product",
-      title: p.name,
-      content: p.shortDescription || p.descriptionHtml || "",
+      title: product.name,
+      content: product.shortDescription || product.descriptionHtml || "",
+      path: getProductPath(product),
     }));
-    return [...pageItems, ...serviceItems, ...productItems];
-  }, [pages, services, products]);
+  }, [products]);
 
   const filteredSearch = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -368,16 +357,18 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!productsMenuOpen) return;
+    if (!productsMenuOpen && !servicesMenuOpen) return;
     const handleOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target?.closest(".nav-item")) {
         setProductsMenuOpen(false);
+        setServicesMenuOpen(false);
       }
     };
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setProductsMenuOpen(false);
+        setServicesMenuOpen(false);
       }
     };
     window.addEventListener("click", handleOutside);
@@ -386,7 +377,7 @@ export default function App() {
       window.removeEventListener("click", handleOutside);
       window.removeEventListener("keydown", handleEscape);
     };
-  }, [productsMenuOpen]);
+  }, [productsMenuOpen, servicesMenuOpen]);
 
   const handleSearchOpen = () => {
     setSearchOpen(true);
@@ -430,7 +421,10 @@ export default function App() {
             <li className="dropdown nav-item">
               <button
                 type="button"
-                onClick={() => setProductsMenuOpen((prev) => !prev)}
+                onClick={() => {
+                  setProductsMenuOpen((prev) => !prev);
+                  setServicesMenuOpen(false);
+                }}
                 aria-expanded={productsMenuOpen}
               >
                 Products <span className="caret" aria-hidden="true" />
@@ -452,10 +446,31 @@ export default function App() {
                 </ul>
               )}
             </li>
-            <li>
-              <a href="/#services" onClick={handleMobileLinkClick}>
-                Services
-              </a>
+            <li className="dropdown nav-item">
+              <button
+                type="button"
+                onClick={() => {
+                  setServicesMenuOpen((prev) => !prev);
+                  setProductsMenuOpen(false);
+                }}
+                aria-expanded={servicesMenuOpen}
+              >
+                Services <span className="caret" aria-hidden="true" />
+              </button>
+              <ul className={servicesMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
+                <li>
+                  <a href="/#services" onClick={handleMobileLinkClick}>
+                    All Services
+                  </a>
+                </li>
+                {services.map((service) => (
+                  <li key={service.id}>
+                    <a href="/#services" onClick={handleMobileLinkClick}>
+                      {service.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </li>
             <li>
               <a href="/#about" onClick={handleMobileLinkClick}>
@@ -495,9 +510,21 @@ export default function App() {
                       ))}
                     </div>
                   </details>
-                  <a href="/#services" onClick={handleMobileLinkClick}>
-                    Services
-                  </a>
+                  <details>
+                    <summary>
+                      Services <span className="caret" aria-hidden="true" />
+                    </summary>
+                    <div className="mchildren">
+                      <a href="/#services" onClick={handleMobileLinkClick}>
+                        All Services
+                      </a>
+                      {services.map((service) => (
+                        <a key={service.id} href="/#services" onClick={handleMobileLinkClick}>
+                          {service.name}
+                        </a>
+                      ))}
+                    </div>
+                  </details>
                   <a href="/#about" onClick={handleMobileLinkClick}>
                     About
                   </a>
@@ -544,7 +571,7 @@ export default function App() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search services, products, pages..."
+            placeholder="Search products..."
           />
           {search && (
             <div className="search-results">
@@ -552,10 +579,15 @@ export default function App() {
                 <div className="search-empty">No matches</div>
               ) : (
                 filteredSearch.slice(0, 8).map((item) => (
-                  <div key={`${item.type}-${item.id}`} className="search-item">
+                  <Link
+                    key={`${item.type}-${item.id}`}
+                    className="search-item"
+                    to={item.path}
+                    onClick={handleSearchClose}
+                  >
                     <span className="search-type">{item.type}</span>
                     <span className="search-title">{item.title}</span>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
