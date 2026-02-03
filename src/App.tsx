@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Route, Routes, useParams } from "react-router-dom";
+import { Link, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
 import {
   fetchContactFormBySlug,
   fetchContactForms,
   fetchMenus,
   fetchPages,
-  fetchProducts,
+  fetchProductBySlug,
+  fetchProductCategories,
+  fetchProductsPage,
   fetchServices,
   submitContactForm,
 } from "./api/public";
@@ -47,17 +49,6 @@ function getPageParentId(page: Page) {
   return page.parent_id || page.parent?.id || null;
 }
 
-function extractProductCategories(product: Product): ProductCategory[] {
-  const list: ProductCategory[] = [];
-  if (product.category) {
-    list.push(product.category);
-  }
-  for (const link of product.categoryLinks || []) {
-    if (link.category) list.push(link.category);
-  }
-  return list;
-}
-
 function getProductPath(product: Product) {
   return `/products/${product.slug || product.id}`;
 }
@@ -72,12 +63,39 @@ function getDefaultFieldValue(field: ContactFormField) {
   return "";
 }
 
-function ProductDetail({ products }: { products: Product[] }) {
+function ProductDetail() {
   const { slug } = useParams();
-  const product = useMemo(() => {
-    if (!slug) return undefined;
-    return products.find((item) => item.slug === slug || item.id === slug);
-  }, [products, slug]);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [productLoading, setProductLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!slug) {
+      setProductLoading(false);
+      return;
+    }
+    setProductLoading(true);
+    fetchProductBySlug(slug)
+      .then((data) => {
+        if (mounted) setProduct(data);
+      })
+      .finally(() => {
+        if (mounted) setProductLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  if (productLoading) {
+    return (
+      <section className="section">
+        <div className="container">
+          <div className="muted">Loading product...</div>
+        </div>
+      </section>
+    );
+  }
 
   if (!product) {
     return (
@@ -126,14 +144,132 @@ function ProductDetail({ products }: { products: Product[] }) {
   );
 }
 
+function ProductsCategoryPage({ categories }: { categories: ProductCategory[] }) {
+  const { categoryId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageSize = 20;
+  const pageParam = Number(searchParams.get("page") || "1");
+  const requestedPage = Number.isFinite(pageParam) ? pageParam : 1;
+  const [items, setItems] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchProductsPage({
+      page: requestedPage,
+      pageSize,
+      categoryId: categoryId && categoryId !== "all" ? categoryId : undefined,
+    })
+      .then((data) => {
+        if (!mounted) return;
+        setItems(data.items || []);
+        setTotal(data.total || 0);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [categoryId, requestedPage]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
+  const categoryName =
+    categoryId && categoryId !== "all"
+      ? categories.find((item) => item.id === categoryId)?.name || "Products"
+      : "All Products";
+  const basePath = categoryId && categoryId !== "all" ? `/products/category/${categoryId}` : "/products";
+
+  useEffect(() => {
+    if (requestedPage !== currentPage) {
+      setSearchParams({ page: String(currentPage) });
+    }
+  }, [requestedPage, currentPage, setSearchParams]);
+
+  return (
+    <section className="section product-listing">
+      <div className="container">
+        <div className="section-header">
+          <h2>{categoryName}</h2>
+          <div className="muted">
+            {total} item{total === 1 ? "" : "s"}
+          </div>
+        </div>
+        {loading ? (
+          <div className="muted">Loading products...</div>
+        ) : items.length === 0 ? (
+          <div className="muted">No products found in this category.</div>
+        ) : (
+          <>
+            <div className="grid">
+              {items.map((product) => (
+                <Link key={product.id} className="card product-card" to={getProductPath(product)}>
+                  {getImageUrl(product) && (
+                    <div className="card-image">
+                      <img src={getImageUrl(product)} alt={product.name} />
+                    </div>
+                  )}
+                  <h3>{product.name}</h3>
+                  <p>{product.shortDescription || "Signature prop from the catalog."}</p>
+                  {product.priceCents && (
+                    <div className="meta">
+                      {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="pagination">
+                <Link
+                  className={currentPage === 1 ? "page-link disabled" : "page-link"}
+                  to={`${basePath}?page=${Math.max(1, currentPage - 1)}`}
+                  aria-disabled={currentPage === 1}
+                >
+                  Prev
+                </Link>
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const page = index + 1;
+                  return (
+                    <Link
+                      key={page}
+                      className={page === currentPage ? "page-link active" : "page-link"}
+                      to={`${basePath}?page=${page}`}
+                    >
+                      {page}
+                    </Link>
+                  );
+                })}
+                <Link
+                  className={currentPage === totalPages ? "page-link disabled" : "page-link"}
+                  to={`${basePath}?page=${Math.min(totalPages, currentPage + 1)}`}
+                  aria-disabled={currentPage === totalPages}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productTotal, setProductTotal] = useState(0);
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [selectedServiceGroupId, setSelectedServiceGroupId] = useState("all");
   const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
@@ -153,13 +289,21 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    Promise.all([fetchPages(), fetchMenus(), fetchServices(), fetchProducts()])
-      .then(([pagesRes, menusRes, servicesRes, productsRes]) => {
+    Promise.all([
+      fetchPages(),
+      fetchMenus(),
+      fetchServices(),
+      fetchProductCategories(),
+      fetchProductsPage({ page: 1, pageSize: 20 }),
+    ])
+      .then(([pagesRes, menusRes, servicesRes, categoriesRes, productsRes]) => {
         if (!mounted) return;
         setPages(pagesRes || []);
         setMenus(menusRes || []);
         setServices(servicesRes || []);
-        setProducts(productsRes || []);
+        setProductCategories(categoriesRes || []);
+        setProducts(productsRes.items || []);
+        setProductTotal(productsRes.total || 0);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -218,24 +362,30 @@ export default function App() {
   }, [products]);
   const logoSrc = "/logo.png";
 
-  const searchableItems = useMemo(() => {
-    return products.map((product) => ({
-      id: product.id,
-      type: "Product",
-      title: product.name,
-      content: product.shortDescription || product.descriptionHtml || "",
-      path: getProductPath(product),
-    }));
-  }, [products]);
-
-  const filteredSearch = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return [];
-    return searchableItems.filter((item) => {
-      const hay = `${item.title} ${item.content}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [search, searchableItems]);
+  useEffect(() => {
+    let mounted = true;
+    const query = search.trim();
+    if (!query) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      fetchProductsPage({ page: 1, pageSize: 8, query })
+        .then((data) => {
+          if (!mounted) return;
+          setSearchResults(data.items || []);
+        })
+        .finally(() => {
+          if (mounted) setSearchLoading(false);
+        });
+    }, 250);
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
+  }, [search]);
 
   const serviceGroups = useMemo(() => {
     return services
@@ -265,33 +415,14 @@ export default function App() {
   }, [pages, selectedPageGroupId]);
 
   const categories = useMemo(() => {
-    const map = new Map<string, { category: ProductCategory; count: number }>();
-    products.forEach((product) => {
-      const cats = extractProductCategories(product);
-      cats.forEach((cat) => {
-        const existing = map.get(cat.id);
-        if (existing) {
-          existing.count += 1;
-        } else {
-          map.set(cat.id, { category: cat, count: 1 });
-        }
-      });
+    return [...productCategories].sort((a, b) => {
+      const sortA = a.sortOrder ?? 0;
+      const sortB = b.sortOrder ?? 0;
+      if (sortA !== sortB) return sortA - sortB;
+      return a.name.localeCompare(b.name);
     });
-    return Array.from(map.values())
-      .filter((item) => item.count > 0)
-      .sort((a, b) => {
-        const sortA = a.category.sortOrder ?? 0;
-        const sortB = b.category.sortOrder ?? 0;
-        if (sortA !== sortB) return sortA - sortB;
-        return a.category.name.localeCompare(b.category.name);
-      });
-  }, [products]);
+  }, [productCategories]);
 
-  useEffect(() => {
-    if (selectedCategoryId === "all") return;
-    const exists = categories.some((item) => item.category.id === selectedCategoryId);
-    if (!exists) setSelectedCategoryId("all");
-  }, [categories, selectedCategoryId]);
 
   useEffect(() => {
     if (selectedServiceGroupId === "all") return;
@@ -305,21 +436,6 @@ export default function App() {
     if (!exists) setSelectedPageGroupId("all");
   }, [pageGroups, selectedPageGroupId]);
 
-  const filteredProducts = useMemo(() => {
-    if (selectedCategoryId === "all") return products;
-    return products.filter((product) => {
-      return extractProductCategories(product).some((cat) => cat.id === selectedCategoryId);
-    });
-  }, [products, selectedCategoryId]);
-
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    setProductsMenuOpen(false);
-    const target = document.getElementById("products");
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   const handleContactFieldChange = (field: ContactFormField, value: string) => {
     setContactFormData((prev) => ({ ...prev, [field.name]: value }));
@@ -395,6 +511,8 @@ export default function App() {
 
   const handleMobileLinkClick = () => {
     setMobileMenuOpen(false);
+    setProductsMenuOpen(false);
+    setServicesMenuOpen(false);
   };
 
   return (
@@ -432,15 +550,18 @@ export default function App() {
               {categories.length > 0 && (
                 <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
                   <li>
-                    <button type="button" onClick={() => handleCategorySelect("all")}>
+                    <Link to="/products" onClick={handleMobileLinkClick}>
                       All Products
-                    </button>
+                    </Link>
                   </li>
                   {categories.map((item) => (
-                    <li key={item.category.id}>
-                      <button type="button" onClick={() => handleCategorySelect(item.category.id)}>
-                        {item.category.name}
-                      </button>
+                    <li key={item.id}>
+                      <Link
+                        to={`/products/category/${item.id}`}
+                        onClick={handleMobileLinkClick}
+                      >
+                        {item.name}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -496,17 +617,17 @@ export default function App() {
                       Products <span className="caret" aria-hidden="true" />
                     </summary>
                     <div className="mchildren">
-                      <button type="button" onClick={() => handleCategorySelect("all")}>
+                      <Link to="/products" onClick={handleMobileLinkClick}>
                         All Products
-                      </button>
+                      </Link>
                       {categories.map((item) => (
-                        <button
-                          key={item.category.id}
-                          type="button"
-                          onClick={() => handleCategorySelect(item.category.id)}
+                        <Link
+                          key={item.id}
+                          to={`/products/category/${item.id}`}
+                          onClick={handleMobileLinkClick}
                         >
-                          {item.category.name}
-                        </button>
+                          {item.name}
+                        </Link>
                       ))}
                     </div>
                   </details>
@@ -575,18 +696,20 @@ export default function App() {
           />
           {search && (
             <div className="search-results">
-              {filteredSearch.length === 0 ? (
+              {searchLoading ? (
+                <div className="search-empty">Searching...</div>
+              ) : searchResults.length === 0 ? (
                 <div className="search-empty">No matches</div>
               ) : (
-                filteredSearch.slice(0, 8).map((item) => (
+                searchResults.map((item) => (
                   <Link
-                    key={`${item.type}-${item.id}`}
+                    key={`Product-${item.id}`}
                     className="search-item"
-                    to={item.path}
+                    to={getProductPath(item)}
                     onClick={handleSearchClose}
                   >
-                    <span className="search-type">{item.type}</span>
-                    <span className="search-title">{item.title}</span>
+                    <span className="search-type">Product</span>
+                    <span className="search-title">{item.name}</span>
                   </Link>
                 ))
               )}
@@ -620,7 +743,7 @@ export default function App() {
               </div>
               <div className="hero-metrics">
                 <div>
-                  <strong>{products.length || 120}+</strong>
+                  <strong>{productTotal || products.length || 120}+</strong>
                   <span>Props</span>
                 </div>
                 <div>
@@ -702,15 +825,11 @@ export default function App() {
               {categories.length > 0 && (
                 <div className="filter">
                   <label htmlFor="productFilter">Category</label>
-                  <select
-                    id="productFilter"
-                    value={selectedCategoryId}
-                    onChange={(e) => setSelectedCategoryId(e.target.value)}
-                  >
+                  <select id="productFilter">
                     <option value="all">All categories</option>
                     {categories.map((item) => (
-                      <option key={item.category.id} value={item.category.id}>
-                        {item.category.name} ({item.count})
+                      <option key={item.id} value={item.id}>
+                        {item.name}
                       </option>
                     ))}
                   </select>
@@ -721,11 +840,9 @@ export default function App() {
               <div className="muted">Loading products...</div>
             ) : products.length === 0 ? (
               <div className="muted">No products found yet.</div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="muted">No products found in this category.</div>
             ) : (
               <div className="grid">
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <Link key={product.id} className="card product-card" to={getProductPath(product)}>
                     {getImageUrl(product) && (
                       <div className="card-image">
@@ -916,7 +1033,9 @@ export default function App() {
               </>
             }
           />
-          <Route path="/products/:slug" element={<ProductDetail products={products} />} />
+          <Route path="/products" element={<ProductsCategoryPage categories={categories} />} />
+          <Route path="/products/category/:categoryId" element={<ProductsCategoryPage categories={categories} />} />
+          <Route path="/products/:slug" element={<ProductDetail />} />
         </Routes>
       </main>
 

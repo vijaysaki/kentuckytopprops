@@ -1,5 +1,5 @@
 import { apiGet, withTenant } from "./client";
-import type { ContactForm, Menu, Page, Product, Service } from "./types";
+import type { ContactForm, Menu, Page, Product, ProductCategory, Service } from "./types";
 
 export async function fetchPages(): Promise<Page[]> {
   return apiGet<Page[]>(withTenant("/public/pages"));
@@ -18,9 +18,76 @@ export async function fetchServices(): Promise<Service[]> {
   }
 }
 
-export async function fetchProducts(): Promise<Product[]> {
+type ProductsPageResponse = {
+  items?: Product[];
+  data?: Product[];
+  results?: Product[];
+  total?: number;
+  count?: number;
+  page?: number;
+  pageSize?: number;
+  limit?: number;
+};
+
+type ProductsPage = {
+  items: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export async function fetchProductsPage(params: {
+  page?: number;
+  pageSize?: number;
+  categoryId?: string;
+  query?: string;
+  slug?: string;
+}): Promise<ProductsPage> {
+  const page = params.page ?? 1;
+  const pageSize = params.pageSize ?? 20;
+  const searchParams = new URLSearchParams();
+  searchParams.set("page", String(page));
+  searchParams.set("pageSize", String(pageSize));
+  if (params.categoryId && params.categoryId !== "all") {
+    searchParams.set("categoryId", params.categoryId);
+  }
+  if (params.query) {
+    searchParams.set("q", params.query);
+  }
+  if (params.slug) {
+    searchParams.set("slug", params.slug);
+  }
+
   try {
-    return await apiGet<Product[]>(withTenant("/public/products"));
+    const response = await apiGet<ProductsPageResponse | Product[]>(
+      withTenant(`/public/products?${searchParams.toString()}`)
+    );
+
+    if (Array.isArray(response)) {
+      return { items: response, total: response.length, page, pageSize };
+    }
+
+    const items = response.items || response.data || response.results || [];
+    const total = response.total ?? response.count ?? items.length;
+    return {
+      items,
+      total,
+      page: response.page ?? page,
+      pageSize: response.pageSize ?? response.limit ?? pageSize,
+    };
+  } catch {
+    return { items: [], total: 0, page, pageSize };
+  }
+}
+
+export async function fetchProductBySlug(slug: string): Promise<Product | null> {
+  const result = await fetchProductsPage({ slug, page: 1, pageSize: 1 });
+  return result.items[0] || null;
+}
+
+export async function fetchProductCategories(): Promise<ProductCategory[]> {
+  try {
+    return await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
   } catch {
     return [];
   }
