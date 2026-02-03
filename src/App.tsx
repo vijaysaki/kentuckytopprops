@@ -509,6 +509,114 @@ export default function App() {
     setContactFormSuccess(null);
   };
 
+  const findContactField = (names: string[]) => {
+    const lookup = names.map((name) => name.toLowerCase());
+    return contactForm?.fields.find((field) =>
+      lookup.some((key) => field.name.toLowerCase().includes(key))
+    );
+  };
+
+  const renderContactField = (field: ContactFormField) => {
+    if (field.type === "textarea") {
+      return (
+        <>
+          <label className="sr-only" htmlFor={field.name}>
+            {field.label}
+          </label>
+          <textarea
+            id={field.name}
+            name={field.name}
+            required={field.required}
+            placeholder={field.placeholder || field.label}
+            value={contactFormData[field.name] || ""}
+            onChange={(e) => handleContactFieldChange(field, e.target.value)}
+          />
+        </>
+      );
+    }
+    if (field.type === "select") {
+      return (
+        <>
+          <label className="sr-only" htmlFor={field.name}>
+            {field.label}
+          </label>
+          <select
+            id={field.name}
+            name={field.name}
+            required={field.required}
+            value={contactFormData[field.name] || ""}
+            onChange={(e) => handleContactFieldChange(field, e.target.value)}
+          >
+            <option value="" disabled>
+              {field.placeholder || "-- Please choose an option --"}
+            </option>
+            {(field.options || []).map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </>
+      );
+    }
+    if (field.type === "radio") {
+      return (
+        <fieldset className="form-field-options">
+          <legend>{field.label}</legend>
+          {(field.options || []).map((option) => (
+            <label key={option}>
+              <input
+                type="radio"
+                name={field.name}
+                value={option}
+                checked={contactFormData[field.name] === option}
+                onChange={(e) => handleContactFieldChange(field, e.target.value)}
+              />
+              {option}
+            </label>
+          ))}
+        </fieldset>
+      );
+    }
+    if (field.type === "checkbox") {
+      const current = Array.isArray(contactFormData[field.name])
+        ? (contactFormData[field.name] as string[])
+        : [];
+      return (
+        <fieldset className="form-field-options">
+          <legend>{field.label}</legend>
+          {(field.options || []).map((option) => (
+            <label key={option}>
+              <input
+                type="checkbox"
+                value={option}
+                checked={current.includes(option)}
+                onChange={(e) => handleContactCheckboxChange(field, option, e.target.checked)}
+              />
+              {option}
+            </label>
+          ))}
+        </fieldset>
+      );
+    }
+    return (
+      <>
+        <label className="sr-only" htmlFor={field.name}>
+          {field.label}
+        </label>
+        <input
+          id={field.name}
+          name={field.name}
+          type={field.type || "text"}
+          required={field.required}
+          placeholder={field.placeholder || field.label}
+          value={contactFormData[field.name] || ""}
+          onChange={(e) => handleContactFieldChange(field, e.target.value)}
+        />
+      </>
+    );
+  };
+
   useEffect(() => {
     if (!productsMenuOpen && !servicesMenuOpen) return;
     const handleOutside = (event: MouseEvent) => {
@@ -920,112 +1028,58 @@ export default function App() {
                     </p>
                     {contactFormNote && <p className="form-note">{contactFormNote}</p>}
                     <ul>
-                      {contactForm.fields.map((field) => {
-                        if (field.type === "textarea") {
-                          return (
-                            <li key={field.name}>
-                              <label className="sr-only" htmlFor={field.name}>
-                                {field.label}
-                              </label>
-                              <textarea
-                                id={field.name}
-                                name={field.name}
-                                required={field.required}
-                                placeholder={field.placeholder || field.label}
-                                value={contactFormData[field.name] || ""}
-                                onChange={(e) => handleContactFieldChange(field, e.target.value)}
-                              />
-                            </li>
-                          );
-                        }
-                        if (field.type === "select") {
-                          return (
-                            <li key={field.name}>
-                              <label className="sr-only" htmlFor={field.name}>
-                                {field.label}
-                              </label>
-                              <select
-                                id={field.name}
-                                name={field.name}
-                                required={field.required}
-                                value={contactFormData[field.name] || ""}
-                                onChange={(e) => handleContactFieldChange(field, e.target.value)}
-                              >
-                                <option value="" disabled>
-                                  {field.placeholder || "-- Please choose an option --"}
-                                </option>
-                                {(field.options || []).map((option) => (
-                                  <option key={option} value={option}>
-                                    {option}
-                                  </option>
-                                ))}
-                              </select>
-                            </li>
-                          );
-                        }
-                        if (field.type === "radio") {
-                          return (
-                            <li key={field.name}>
-                              <fieldset className="form-field-options">
-                                <legend>{field.label}</legend>
-                                {(field.options || []).map((option) => (
-                                  <label key={option}>
-                                    <input
-                                      type="radio"
-                                      name={field.name}
-                                      value={option}
-                                      checked={contactFormData[field.name] === option}
-                                      onChange={(e) => handleContactFieldChange(field, e.target.value)}
-                                    />
-                                    {option}
-                                  </label>
-                                ))}
-                              </fieldset>
-                            </li>
-                          );
-                        }
-                        if (field.type === "checkbox") {
-                          const current = Array.isArray(contactFormData[field.name])
-                            ? (contactFormData[field.name] as string[])
-                            : [];
-                          return (
-                            <li key={field.name}>
-                              <fieldset className="form-field-options">
-                                <legend>{field.label}</legend>
-                                {(field.options || []).map((option) => (
-                                  <label key={option}>
-                                    <input
-                                      type="checkbox"
-                                      value={option}
-                                      checked={current.includes(option)}
-                                      onChange={(e) =>
-                                        handleContactCheckboxChange(field, option, e.target.checked)
-                                      }
-                                    />
-                                    {option}
-                                  </label>
-                                ))}
-                              </fieldset>
-                            </li>
-                          );
-                        }
-                        return (
-                          <li key={field.name}>
-                            <label className="sr-only" htmlFor={field.name}>
-                              {field.label}
-                            </label>
-                            <input
-                              id={field.name}
-                              name={field.name}
-                              type={field.type || "text"}
-                              required={field.required}
-                              placeholder={field.placeholder || field.label}
-                              value={contactFormData[field.name] || ""}
-                              onChange={(e) => handleContactFieldChange(field, e.target.value)}
-                            />
-                          </li>
+                      {(() => {
+                        const fields = contactForm.fields;
+                        const reasonField =
+                          findContactField(["reason", "topic", "subject"]) ||
+                          fields.find((field) => field.type === "select");
+                        const firstNameField =
+                          findContactField(["first", "firstname", "given"]) ||
+                          fields.find((field) => field.name.toLowerCase().includes("name"));
+                        const lastNameField = findContactField(["last", "lastname", "surname", "family"]);
+                        const emailField = findContactField(["email"]);
+                        const phoneField = findContactField(["phone", "tel", "mobile"]);
+                        const messageField =
+                          findContactField(["message", "notes", "details", "comment"]) ||
+                          fields.find((field) => field.type === "textarea");
+
+                        const used = new Set(
+                          [
+                            reasonField,
+                            firstNameField,
+                            lastNameField,
+                            emailField,
+                            phoneField,
+                            messageField,
+                          ]
+                            .filter(Boolean)
+                            .map((field) => field!.name)
                         );
-                      })}
+
+                        const remaining = fields.filter((field) => !used.has(field.name));
+
+                        return (
+                          <>
+                            {reasonField && <li key={reasonField.name}>{renderContactField(reasonField)}</li>}
+                            {(firstNameField || lastNameField) && (
+                              <li className="grid grid-2">
+                                <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
+                                <div>{lastNameField ? renderContactField(lastNameField) : null}</div>
+                              </li>
+                            )}
+                            {(emailField || phoneField) && (
+                              <li className="grid grid-2">
+                                <div>{emailField ? renderContactField(emailField) : null}</div>
+                                <div>{phoneField ? renderContactField(phoneField) : null}</div>
+                              </li>
+                            )}
+                            {messageField && <li key={messageField.name}>{renderContactField(messageField)}</li>}
+                            {remaining.map((field) => (
+                              <li key={field.name}>{renderContactField(field)}</li>
+                            ))}
+                          </>
+                        );
+                      })()}
                       <li className="btn-row">
                         <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
                           {contactFormSubmitting ? "Sending..." : "Submit"}

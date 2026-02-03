@@ -85,11 +85,45 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
   return result.items[0] || null;
 }
 
+export async function fetchProductCategoriesFromProducts(options?: {
+  pageSize?: number;
+  maxPages?: number;
+}): Promise<ProductCategory[]> {
+  const pageSize = options?.pageSize ?? 100;
+  const maxPages = options?.maxPages ?? 50;
+  const categories = new Map<string, ProductCategory>();
+  let page = 1;
+  let totalPages = 1;
+
+  while (page <= totalPages && page <= maxPages) {
+    const result = await fetchProductsPage({ page, pageSize });
+    const items = result.items || [];
+
+    items.forEach((product) => {
+      if (product.category?.id) {
+        categories.set(product.category.id, product.category);
+      }
+      (product.categoryLinks || []).forEach((link) => {
+        if (link.category?.id) {
+          categories.set(link.category.id, link.category);
+        }
+      });
+    });
+
+    const resultPageSize = result.pageSize || pageSize;
+    totalPages = resultPageSize ? Math.ceil((result.total || 0) / resultPageSize) : 1;
+    if (items.length === 0) break;
+    page += 1;
+  }
+
+  return Array.from(categories.values());
+}
+
 export async function fetchProductCategories(): Promise<ProductCategory[]> {
   try {
     return await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
   } catch {
-    return [];
+    return fetchProductCategoriesFromProducts();
   }
 }
 
