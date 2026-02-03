@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
 import {
   fetchContactFormBySlug,
@@ -49,8 +49,20 @@ function getPageParentId(page: Page) {
   return page.parent_id || page.parent?.id || null;
 }
 
+function getCategorySlug(category?: ProductCategory | null) {
+  return category?.slug || category?.id || "";
+}
+
+function getProductCategorySlug(product: Product) {
+  const category = product.category || product.categoryLinks?.[0]?.category || null;
+  return getCategorySlug(category);
+}
+
 function getProductPath(product: Product) {
-  return `/products/${product.slug || product.id}`;
+  const categorySlug = getProductCategorySlug(product);
+  const productSlug = product.slug || product.id;
+  if (categorySlug) return `/products/${categorySlug}/${productSlug}`;
+  return `/products/uncategorized/${productSlug}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
@@ -64,18 +76,18 @@ function getDefaultFieldValue(field: ContactFormField) {
 }
 
 function ProductDetail() {
-  const { slug } = useParams();
+  const { productSlug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    if (!slug) {
+    if (!productSlug) {
       setProductLoading(false);
       return;
     }
     setProductLoading(true);
-    fetchProductBySlug(slug)
+    fetchProductBySlug(productSlug)
       .then((data) => {
         if (mounted) setProduct(data);
       })
@@ -85,7 +97,7 @@ function ProductDetail() {
     return () => {
       mounted = false;
     };
-  }, [slug]);
+  }, [productSlug]);
 
   if (productLoading) {
     return (
@@ -145,7 +157,7 @@ function ProductDetail() {
 }
 
 function ProductsCategoryPage({ categories }: { categories: ProductCategory[] }) {
-  const { categoryId } = useParams();
+  const { categorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageSize = 20;
   const pageParam = Number(searchParams.get("page") || "1");
@@ -153,6 +165,8 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const [items, setItems] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const categoryId =
+    categories.find((item) => getCategorySlug(item) === categorySlug)?.id || categorySlug;
 
   useEffect(() => {
     let mounted = true;
@@ -160,7 +174,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
     fetchProductsPage({
       page: requestedPage,
       pageSize,
-      categoryId: categoryId && categoryId !== "all" ? categoryId : undefined,
+      categoryId: categoryId ? categoryId : undefined,
     })
       .then((data) => {
         if (!mounted) return;
@@ -178,10 +192,8 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
   const categoryName =
-    categoryId && categoryId !== "all"
-      ? categories.find((item) => item.id === categoryId)?.name || "Products"
-      : "All Products";
-  const basePath = categoryId && categoryId !== "all" ? `/products/category/${categoryId}` : "/products";
+    categories.find((item) => getCategorySlug(item) === categorySlug)?.name || "Products";
+  const basePath = categorySlug ? `/products/${categorySlug}` : "/products";
 
   useEffect(() => {
     if (requestedPage !== currentPage) {
@@ -254,6 +266,20 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
             )}
           </>
         )}
+      </div>
+    </section>
+  );
+}
+
+function ProductsIndexPage({ categories }: { categories: ProductCategory[] }) {
+  if (categories.length > 0) {
+    const first = getCategorySlug(categories[0]);
+    if (first) return <Navigate to={`/products/${first}`} replace />;
+  }
+  return (
+    <section className="section">
+      <div className="container">
+        <div className="muted">No product categories available.</div>
       </div>
     </section>
   );
@@ -549,15 +575,10 @@ export default function App() {
               </button>
               {categories.length > 0 && (
                 <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
-                  <li>
-                    <Link to="/products" onClick={handleMobileLinkClick}>
-                      All Products
-                    </Link>
-                  </li>
                   {categories.map((item) => (
                     <li key={item.id}>
                       <Link
-                        to={`/products/category/${item.id}`}
+                        to={`/products/${getCategorySlug(item)}`}
                         onClick={handleMobileLinkClick}
                       >
                         {item.name}
@@ -617,13 +638,10 @@ export default function App() {
                       Products <span className="caret" aria-hidden="true" />
                     </summary>
                     <div className="mchildren">
-                      <Link to="/products" onClick={handleMobileLinkClick}>
-                        All Products
-                      </Link>
                       {categories.map((item) => (
                         <Link
                           key={item.id}
-                          to={`/products/category/${item.id}`}
+                          to={`/products/${getCategorySlug(item)}`}
                           onClick={handleMobileLinkClick}
                         >
                           {item.name}
@@ -823,39 +841,25 @@ export default function App() {
             <div className="section-header">
               <h2>Products</h2>
               {categories.length > 0 && (
-                <div className="filter">
-                  <label htmlFor="productFilter">Category</label>
-                  <select id="productFilter">
-                    <option value="all">All categories</option>
-                    {categories.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Link className="btn" to={`/products/${getCategorySlug(categories[0])}`}>
+                  Browse all categories
+                </Link>
               )}
             </div>
             {loading ? (
               <div className="muted">Loading products...</div>
-            ) : products.length === 0 ? (
-              <div className="muted">No products found yet.</div>
+            ) : categories.length === 0 ? (
+              <div className="muted">No product categories available yet.</div>
             ) : (
               <div className="grid">
-                {products.map((product) => (
-                  <Link key={product.id} className="card product-card" to={getProductPath(product)}>
-                    {getImageUrl(product) && (
-                      <div className="card-image">
-                        <img src={getImageUrl(product)} alt={product.name} />
-                      </div>
-                    )}
-                    <h3>{product.name}</h3>
-                    <p>{product.shortDescription || "Signature prop from the catalog."}</p>
-                    {product.priceCents && (
-                      <div className="meta">
-                        {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
-                      </div>
-                    )}
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    className="card product-card"
+                    to={`/products/${getCategorySlug(category)}`}
+                  >
+                    <h3>{category.name}</h3>
+                    <p>View products in this category.</p>
                   </Link>
                 ))}
               </div>
@@ -1033,9 +1037,9 @@ export default function App() {
               </>
             }
           />
-          <Route path="/products" element={<ProductsCategoryPage categories={categories} />} />
-          <Route path="/products/category/:categoryId" element={<ProductsCategoryPage categories={categories} />} />
-          <Route path="/products/:slug" element={<ProductDetail />} />
+          <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
+          <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
+          <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
         </Routes>
       </main>
 
