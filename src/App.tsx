@@ -138,6 +138,8 @@ export default function App() {
   const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactForm, setContactForm] = useState<ContactForm | null>(null);
   const [contactFormNote, setContactFormNote] = useState<string | null>(null);
   const [contactFormData, setContactFormData] = useState<Record<string, any>>({});
@@ -386,86 +388,182 @@ export default function App() {
     };
   }, [productsMenuOpen]);
 
+  const handleSearchOpen = () => {
+    setSearchOpen(true);
+    setMobileMenuOpen(false);
+  };
+
+  const handleSearchClose = () => {
+    setSearchOpen(false);
+  };
+
+  const handleMobileToggle = () => {
+    setMobileMenuOpen((prev) => !prev);
+    setSearchOpen(false);
+  };
+
+  const handleMobileLinkClick = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="site">
-      <header className="site-header">
-        <div className="container header-inner">
-          <div className="logo">
-            {logoVisible && (
-              <img
-                src={logoSrc}
-                alt="Kentucky Top Props"
-                onError={() => setLogoVisible(false)}
-              />
-            )}
-            <span>Kentucky Top Props</span>
-          </div>
-          <nav className="nav">
-            <Link className="nav-link" to="/">
-              Home
-            </Link>
-            <div className="nav-item">
+      <header className={mobileMenuOpen ? "site-header open" : "site-header"}>
+        <Link className="logo" to="/">
+          {logoVisible && (
+            <img
+              src={logoSrc}
+              alt="Kentucky Top Props"
+              onError={() => setLogoVisible(false)}
+            />
+          )}
+          <span>Kentucky Top Props</span>
+        </Link>
+
+        <div className="group">
+          <ul className="navigation" aria-label="Primary navigation">
+            <li>
+              <Link to="/" onClick={handleMobileLinkClick}>
+                Home
+              </Link>
+            </li>
+            <li className="dropdown nav-item">
               <button
                 type="button"
-                className="nav-link nav-button"
                 onClick={() => setProductsMenuOpen((prev) => !prev)}
                 aria-expanded={productsMenuOpen}
               >
-                Products
-                <span className={productsMenuOpen ? "nav-caret open" : "nav-caret"} />
+                Products <span className="caret" aria-hidden="true" />
               </button>
               {categories.length > 0 && (
-                <div className={productsMenuOpen ? "nav-dropdown open" : "nav-dropdown"}>
-                  <button type="button" onClick={() => handleCategorySelect("all")}>
-                    All Products
-                  </button>
-                  {categories.map((item) => (
-                    <button
-                      key={item.category.id}
-                      type="button"
-                      onClick={() => handleCategorySelect(item.category.id)}
-                    >
-                      {item.category.name}
+                <ul className={productsMenuOpen ? "dropdown-menu open" : "dropdown-menu"}>
+                  <li>
+                    <button type="button" onClick={() => handleCategorySelect("all")}>
+                      All Products
                     </button>
+                  </li>
+                  {categories.map((item) => (
+                    <li key={item.category.id}>
+                      <button type="button" onClick={() => handleCategorySelect(item.category.id)}>
+                        {item.category.name}
+                      </button>
+                    </li>
                   ))}
+                </ul>
+              )}
+            </li>
+            <li>
+              <a href="/#services" onClick={handleMobileLinkClick}>
+                Services
+              </a>
+            </li>
+            <li>
+              <a href="/#about" onClick={handleMobileLinkClick}>
+                About
+              </a>
+            </li>
+            <li>
+              <a href="/#contact" onClick={handleMobileLinkClick}>
+                Contact
+              </a>
+            </li>
+            <li className="mnav" aria-hidden="true">
+              <details>
+                <summary>
+                  Menu <span className="caret" aria-hidden="true" />
+                </summary>
+                <div className="mchildren">
+                  <Link to="/" onClick={handleMobileLinkClick}>
+                    Home
+                  </Link>
+                  <details>
+                    <summary>
+                      Products <span className="caret" aria-hidden="true" />
+                    </summary>
+                    <div className="mchildren">
+                      <button type="button" onClick={() => handleCategorySelect("all")}>
+                        All Products
+                      </button>
+                      {categories.map((item) => (
+                        <button
+                          key={item.category.id}
+                          type="button"
+                          onClick={() => handleCategorySelect(item.category.id)}
+                        >
+                          {item.category.name}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                  <a href="/#services" onClick={handleMobileLinkClick}>
+                    Services
+                  </a>
+                  <a href="/#about" onClick={handleMobileLinkClick}>
+                    About
+                  </a>
+                  <a href="/#contact" onClick={handleMobileLinkClick}>
+                    Contact
+                  </a>
                 </div>
+              </details>
+            </li>
+          </ul>
+
+          <div className="search" aria-label="Search controls">
+            <span className="icon">
+              <button
+                type="button"
+                className={searchOpen ? "searchBtn active" : "searchBtn"}
+                aria-label="Open search"
+                onClick={handleSearchOpen}
+              >
+                🔍
+              </button>
+              <button
+                type="button"
+                className={searchOpen ? "closeBtn active" : "closeBtn"}
+                aria-label="Close search"
+                onClick={handleSearchClose}
+              >
+                ✕
+              </button>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className={searchOpen ? "menuToggle hide" : "menuToggle"}
+            aria-label="Open menu"
+            onClick={handleMobileToggle}
+          >
+            ☰
+          </button>
+        </div>
+
+        <div className={searchOpen ? "searchBox active" : "searchBox"}>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search services, products, pages..."
+          />
+          {search && (
+            <div className="search-results">
+              {filteredSearch.length === 0 ? (
+                <div className="search-empty">No matches</div>
+              ) : (
+                filteredSearch.slice(0, 8).map((item) => (
+                  <div key={`${item.type}-${item.id}`} className="search-item">
+                    <span className="search-type">{item.type}</span>
+                    <span className="search-title">{item.title}</span>
+                  </div>
+                ))
               )}
             </div>
-            <a className="nav-link" href="/#services">
-              Services
-            </a>
-            <a className="nav-link" href="/#about">
-              About
-            </a>
-            <a className="nav-link" href="/#contact">
-              Contact
-            </a>
-          </nav>
-          <div className="search">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services, products, pages..."
-            />
-            {search && (
-              <div className="search-results">
-                {filteredSearch.length === 0 ? (
-                  <div className="search-empty">No matches</div>
-                ) : (
-                  filteredSearch.slice(0, 8).map((item) => (
-                    <div key={`${item.type}-${item.id}`} className="search-item">
-                      <span className="search-type">{item.type}</span>
-                      <span className="search-title">{item.title}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </header>
 
-      <main>
+      <main className="main-content">
         <Routes>
           <Route
             path="/"
@@ -790,22 +888,73 @@ export default function App() {
         </Routes>
       </main>
 
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div>
-            <div className="logo">Kentucky Top Props</div>
-            <p className="muted">Modern prop rentals and production support.</p>
-          </div>
-          <div className="footer-links">
-            {(footerMenu?.items || headerMenu?.items || []).map((item) => {
-              const label = item.label || item.page?.title || "Link";
-              const href = item.external_url || `#${item.page?.slug || "section"}`;
-              return (
-                <a key={item.id} href={href}>
-                  {label}
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-row">
+            <div className="footer-col">
+              <h4>Company</h4>
+              <ul>
+                {(footerMenu?.items || headerMenu?.items || []).slice(0, 4).map((item) => {
+                  const label = item.label || item.page?.title || "Link";
+                  const href = item.external_url || `#${item.page?.slug || "section"}`;
+                  return (
+                    <li key={item.id}>
+                      <a href={href}>{label}</a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <div className="footer-col">
+              <h4>Get help</h4>
+              <ul>
+                {(footerMenu?.items || headerMenu?.items || []).slice(4, 8).map((item) => {
+                  const label = item.label || item.page?.title || "Link";
+                  const href = item.external_url || `#${item.page?.slug || "section"}`;
+                  return (
+                    <li key={item.id}>
+                      <a href={href}>{label}</a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <div className="footer-col">
+              <h4>Services</h4>
+              <ul>
+                {services.slice(0, 4).map((service) => (
+                  <li key={service.id}>
+                    <a href="/#services">{service.name}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="footer-col">
+              <h4>Follow us</h4>
+              <div className="social-links">
+                <a href="#" aria-label="Facebook">
+                  f
                 </a>
-              );
-            })}
+                <a href="#" aria-label="Twitter">
+                  t
+                </a>
+                <a href="#" aria-label="Instagram">
+                  i
+                </a>
+                <a href="#" aria-label="LinkedIn">
+                  in
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="footer-bottom">
+            <span>© {new Date().getFullYear()} Kentucky Top Props. All rights reserved.</span>
+            <div className="footer-bottom-links">
+              <a href="#">Terms</a>
+              <a href="#">Privacy</a>
+              <a href="#">Cookies</a>
+            </div>
           </div>
         </div>
       </footer>
