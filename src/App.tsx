@@ -3,6 +3,7 @@ import { Link, Route, Routes, useParams } from "react-router-dom";
 import "./App.css";
 import {
   fetchContactFormBySlug,
+  fetchContactForms,
   fetchMenus,
   fetchPages,
   fetchProducts,
@@ -138,11 +139,13 @@ export default function App() {
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
   const [contactForm, setContactForm] = useState<ContactForm | null>(null);
+  const [contactFormNote, setContactFormNote] = useState<string | null>(null);
   const [contactFormData, setContactFormData] = useState<Record<string, any>>({});
   const [contactFormLoading, setContactFormLoading] = useState(true);
   const [contactFormSubmitting, setContactFormSubmitting] = useState(false);
   const [contactFormError, setContactFormError] = useState<string | null>(null);
   const [contactFormSuccess, setContactFormSuccess] = useState<string | null>(null);
+  const contactPage = pages.find((p) => p.slug === "contact");
 
   useEffect(() => {
     let mounted = true;
@@ -163,19 +166,34 @@ export default function App() {
     };
   }, []);
 
+  const contactFormSlug = contactPage?.slug || "contact";
+
   useEffect(() => {
     let mounted = true;
     setContactFormLoading(true);
-    fetchContactFormBySlug("contact")
-      .then((form) => {
+    fetchContactFormBySlug(contactFormSlug)
+      .then(async (form) => {
         if (!mounted) return;
-        setContactForm(form);
-        if (form?.fields?.length) {
+        let selectedForm = form;
+        let note: string | null = null;
+        if (!selectedForm) {
+          const forms = await fetchContactForms();
+          if (!mounted) return;
+          selectedForm = forms[0] || null;
+          if (selectedForm) {
+            note = `Using "${selectedForm.name}" form. Update slug in Super Admin if needed.`;
+          }
+        }
+        setContactForm(selectedForm || null);
+        setContactFormNote(note);
+        if (selectedForm?.fields?.length) {
           const initialData: Record<string, any> = {};
-          form.fields.forEach((field) => {
+          selectedForm.fields.forEach((field) => {
             initialData[field.name] = getDefaultFieldValue(field);
           });
           setContactFormData(initialData);
+        } else {
+          setContactFormData({});
         }
       })
       .finally(() => {
@@ -184,14 +202,13 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [contactFormSlug]);
 
   const headerMenu = menus.find((m) => m.slug === "header") || menus[0];
   const footerMenu = menus.find((m) => m.slug === "footer");
 
   const heroPage = pages.find((p) => p.slug === "home") || pages[0];
   const aboutPage = pages.find((p) => p.slug === "about");
-  const contactPage = pages.find((p) => p.slug === "contact");
   const heroImage = useMemo(() => {
     const fromProduct = products.find((product) => getImageUrl(product));
     return fromProduct ? getImageUrl(fromProduct) : "";
@@ -667,6 +684,7 @@ export default function App() {
                 <form onSubmit={handleContactSubmit}>
                   <h3>{contactForm.name}</h3>
                   {contactForm.description && <p className="muted">{contactForm.description}</p>}
+                  {contactFormNote && <p className="muted">{contactFormNote}</p>}
                   <div className="form-grid">
                     {contactForm.fields.map((field) => {
                       if (field.type === "textarea") {

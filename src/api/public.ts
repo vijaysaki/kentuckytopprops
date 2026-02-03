@@ -34,6 +34,14 @@ export async function fetchContactFormBySlug(slug: string): Promise<ContactForm 
   }
 }
 
+export async function fetchContactForms(): Promise<ContactForm[]> {
+  try {
+    return await apiGet<ContactForm[]>(withTenant("/public/contact-forms"));
+  } catch {
+    return [];
+  }
+}
+
 export async function submitContactForm(formId: string, data: Record<string, any>) {
   const url = withTenant(`/public/contact-forms/${formId}/submissions`);
   const base = import.meta.env.VITE_API_BASE_URL?.toString() || "";
