@@ -10,11 +10,45 @@ export async function fetchMenus(): Promise<Menu[]> {
 }
 
 // These endpoints require backend support. If not available, return empty arrays.
+function flattenServicesTree(nodes: Service[] | undefined, parentId?: string | null): Service[] {
+  if (!nodes?.length) return [];
+  const result: Service[] = [];
+  nodes.forEach((node) => {
+    const normalized: Service = parentId && !node.parentId ? { ...node, parentId } : node;
+    result.push(normalized);
+    if (node.children?.length) {
+      result.push(...flattenServicesTree(node.children, node.id));
+    }
+  });
+  return result;
+}
+
+function flattenCategoryTree(
+  nodes: ProductCategory[] | undefined,
+  parentId?: string | null
+): ProductCategory[] {
+  if (!nodes?.length) return [];
+  const result: ProductCategory[] = [];
+  nodes.forEach((node) => {
+    const normalized: ProductCategory = parentId && !node.parentId ? { ...node, parentId } : node;
+    result.push(normalized);
+    if (node.children?.length) {
+      result.push(...flattenCategoryTree(node.children, node.id));
+    }
+  });
+  return result;
+}
+
 export async function fetchServices(): Promise<Service[]> {
   try {
-    return await apiGet<Service[]>(withTenant("/public/services"));
+    const tree = await apiGet<Service[]>(withTenant("/public/services/tree"));
+    return flattenServicesTree(tree);
   } catch {
-    return [];
+    try {
+      return await apiGet<Service[]>(withTenant("/public/services"));
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -121,7 +155,8 @@ export async function fetchProductCategoriesFromProducts(options?: {
 
 export async function fetchProductCategories(): Promise<ProductCategory[]> {
   try {
-    return await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
+    const tree = await apiGet<ProductCategory[]>(withTenant("/public/products/categories"));
+    return flattenCategoryTree(tree);
   } catch {
     return fetchProductCategoriesFromProducts();
   }

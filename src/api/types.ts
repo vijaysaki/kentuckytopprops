@@ -89,6 +89,7 @@ export type ProductCategory = {
   sortOrder?: number;
   parentId?: string | null;
   parent?: ProductCategory | null;
+  children?: ProductCategory[];
 };
 
 export type ProductCategoryLink = {
