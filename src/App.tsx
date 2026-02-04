@@ -233,6 +233,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
     (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
   );
   const categoryId = matchedCategory?.id;
+  const categorySlugValue = matchedCategory?.slug || categorySlug;
 
   useEffect(() => {
     let mounted = true;
@@ -249,12 +250,32 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
       page: requestedPage,
       pageSize,
       categoryId: categoryId || undefined,
-      categorySlug: matchedCategory?.slug || categorySlug || undefined,
+      categorySlug: categorySlugValue || undefined,
     })
       .then((data) => {
         if (!mounted) return;
-        setItems(data.items || []);
-        setTotal(data.total || 0);
+        const incoming = data.items || [];
+        if (categoryId || categorySlugValue) {
+          const filtered = incoming.filter((product) => {
+            const direct = product.category;
+            if (direct) {
+              if (categoryId && direct.id === categoryId) return true;
+              if (categorySlugValue && direct.slug === categorySlugValue) return true;
+            }
+            return (product.categoryLinks || []).some((link) => {
+              const cat = link.category;
+              if (!cat) return false;
+              if (categoryId && cat.id === categoryId) return true;
+              if (categorySlugValue && cat.slug === categorySlugValue) return true;
+              return false;
+            });
+          });
+          setItems(filtered);
+          setTotal(filtered.length);
+        } else {
+          setItems(incoming);
+          setTotal(data.total || incoming.length);
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
