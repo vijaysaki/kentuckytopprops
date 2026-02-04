@@ -122,7 +122,7 @@ function buildServiceTreeFromFlat(items: Service[]) {
   return roots;
 }
 
-function ProductDetail() {
+function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const { productSlug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
@@ -170,6 +170,12 @@ function ProductDetail() {
   }
 
   const images = sortProductImages(product.images);
+  const productCategory = product.category || product.categoryLinks?.[0]?.category || null;
+  const categorySlug = getCategorySlug(productCategory);
+  const categoryName =
+    productCategory?.name ||
+    categories.find((category) => getCategorySlug(category) === categorySlug)?.name ||
+    "Category";
 
   return (
     <section className="section product-detail">
@@ -189,6 +195,17 @@ function ProductDetail() {
           )}
         </div>
         <div className="product-info">
+          <nav className="breadcrumbs" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span className="breadcrumb-sep">/</span>
+            <Link to="/products">Products</Link>
+            <span className="breadcrumb-sep">/</span>
+            <Link to={categorySlug ? `/products/${categorySlug}` : "/products"}>
+              {categoryName}
+            </Link>
+            <span className="breadcrumb-sep">/</span>
+            <span>{product.name}</span>
+          </nav>
           <Link className="back-link" to="/">
             ← Back to home
           </Link>
@@ -212,16 +229,26 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const [items, setItems] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const categoryId =
-    categories.find((item) => getCategorySlug(item) === categorySlug)?.id || categorySlug;
+  const matchedCategory = categories.find(
+    (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
+  );
+  const categoryId = matchedCategory?.id;
 
   useEffect(() => {
     let mounted = true;
+    if (categorySlug && !categoryId) {
+      setItems([]);
+      setTotal(0);
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
     setLoading(true);
     fetchProductsPage({
       page: requestedPage,
       pageSize,
-      categoryId: categoryId ? categoryId : undefined,
+      categoryId: categoryId || undefined,
     })
       .then((data) => {
         if (!mounted) return;
@@ -234,12 +261,11 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
     return () => {
       mounted = false;
     };
-  }, [categoryId, requestedPage]);
+  }, [categoryId, categorySlug, requestedPage]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
-  const categoryName =
-    categories.find((item) => getCategorySlug(item) === categorySlug)?.name || "Products";
+  const categoryName = matchedCategory?.name || "Products";
   const basePath = categorySlug ? `/products/${categorySlug}` : "/products";
 
   useEffect(() => {
@@ -251,6 +277,13 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   return (
     <section className="section product-listing">
       <div className="container">
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="breadcrumb-sep">/</span>
+          <Link to="/products">Products</Link>
+          <span className="breadcrumb-sep">/</span>
+          <span>{categoryName}</span>
+        </nav>
         <div className="section-header">
           <h2>{categoryName}</h2>
           <div className="muted">
@@ -1275,7 +1308,7 @@ export default function App() {
           />
           <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
-          <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail />} />
+          <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail categories={categories} />} />
           <Route path="/admin" element={<AdminRedirect />} />
         </Routes>
       </main>

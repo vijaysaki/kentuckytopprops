@@ -631,6 +631,31 @@ h3 {
   margin-bottom: 0.75rem;
 }
 
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(51, 51, 51, 0.7);
+  margin-bottom: 0.75rem;
+}
+
+.breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  opacity: 0.6;
+}
+
 .back-link {
   display: inline-block;
   margin-bottom: 1rem;
