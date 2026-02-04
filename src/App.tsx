@@ -126,6 +126,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const { productSlug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
+  console.log("[ProductDetail] productSlug from URL:", productSlug);
 
   useEffect(() => {
     let mounted = true;
@@ -136,6 +137,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     setProductLoading(true);
     fetchProductBySlug(productSlug)
       .then((data) => {
+        console.log("[ProductDetail] fetched product for slug", productSlug, data);
         if (mounted) setProduct(data);
       })
       .finally(() => {
