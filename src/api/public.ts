@@ -83,6 +83,7 @@ export async function fetchProductsPage(params: {
   page?: number;
   pageSize?: number;
   categoryId?: string;
+  categorySlug?: string;
   query?: string;
   slug?: string;
 }): Promise<ProductsPage> {
@@ -93,6 +94,10 @@ export async function fetchProductsPage(params: {
   searchParams.set("pageSize", String(pageSize));
   if (params.categoryId && params.categoryId !== "all") {
     searchParams.set("categoryId", params.categoryId);
+  }
+  if (params.categorySlug) {
+    searchParams.set("categorySlug", params.categorySlug);
+    searchParams.set("category", params.categorySlug);
   }
   if (params.query) {
     searchParams.set("q", params.query);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
 import {
   fetchContactFormBySlug,
@@ -249,6 +249,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
       page: requestedPage,
       pageSize,
       categoryId: categoryId || undefined,
+      categorySlug: matchedCategory?.slug || categorySlug || undefined,
     })
       .then((data) => {
         if (!mounted) return;
@@ -379,6 +380,7 @@ function AdminRedirect() {
 }
 
 export default function App() {
+  const navigate = useNavigate();
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -466,6 +468,21 @@ export default function App() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirectParam = params.get("redirect");
+    if (!redirectParam) return;
+    const target = decodeURIComponent(redirectParam);
+    params.delete("redirect");
+    const nextSearch = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`
+    );
+    navigate(target, { replace: true });
+  }, [navigate]);
 
   const contactFormSlug = contactPage?.slug || "contact";
 
