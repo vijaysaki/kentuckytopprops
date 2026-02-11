@@ -147,8 +147,17 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
           console.log("[ProductDetail][DEBUG] fetchProductById API returned:", data);
           if (mounted) setProduct(data);
         })
-        .catch((err) => {
+        .catch(async (err) => {
           console.error("[ProductDetail][DEBUG] fetchProductById error:", err);
+          if (err && err.response) {
+            try {
+              const text = await err.response.text();
+              console.error("[ProductDetail][DEBUG] Error response text:", text);
+            } catch (e) {
+              console.error("[ProductDetail][DEBUG] Could not read error response text:", e);
+            }
+            console.error("[ProductDetail][DEBUG] Error status:", err.response.status);
+          }
         })
         .finally(() => {
           if (mounted) setProductLoading(false);
