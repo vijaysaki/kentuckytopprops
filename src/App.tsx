@@ -134,13 +134,16 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
       return;
     }
     setProductLoading(true);
-    fetchProductBySlug(productSlug)
-      .then((data) => {
-        if (mounted) setProduct(data);
-      })
-      .finally(() => {
-        if (mounted) setProductLoading(false);
-      });
+    // Use fetchProductById which should call /public/products/{productId}?tenantId={tenantId}
+    import("./api/public").then(({ fetchProductById }) => {
+      fetchProductById(productSlug)
+        .then((data) => {
+          if (mounted) setProduct(data);
+        })
+        .finally(() => {
+          if (mounted) setProductLoading(false);
+        });
+    });
     return () => {
       mounted = false;
     };
