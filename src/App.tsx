@@ -185,10 +185,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const images = sortProductImages(product.images);
   const productCategory = product.category || product.categoryLinks?.[0]?.category || null;
   const categorySlugFromProduct = getCategorySlug(productCategory);
-  const categoryName =
-    productCategory?.name ||
-    categories.find((category) => getCategorySlug(category) === categorySlugFromProduct)?.name ||
-    "Category";
+  // categoryName is not used, so remove it
 
   // Find the full category path for breadcrumbs
   function getCategoryBreadcrumbs(slug: string | undefined) {
@@ -198,7 +195,8 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     while (current) {
       path.unshift(current);
       if (!current.parentId) break;
-      current = categories.find((cat) => cat.id === current.parentId);
+      // Defensive: only look up if parentId is defined
+      current = current.parentId ? categories.find((cat) => cat.id === current!.parentId) : undefined;
     }
     return path;
   }
@@ -227,7 +225,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
             <Link to="/">Home</Link>
             <span className="breadcrumb-sep">/</span>
             <Link to="/products">Products</Link>
-            {breadcrumbs.map((cat, idx) => (
+            {breadcrumbs.map((cat) => (
               <span key={cat.id}>
                 <span className="breadcrumb-sep">/</span>
                 <Link to={`/products/${cat.slug || cat.id}`}>{cat.name}</Link>
