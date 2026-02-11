@@ -62,9 +62,11 @@ function getProductCategorySlug(product: Product) {
 
 function getProductPath(product: Product) {
   const categorySlug = getProductCategorySlug(product);
+  const productId = product.id;
   const productSlug = product.slug || product.id;
-  if (categorySlug) return `/products/${categorySlug}/${productSlug}`;
-  return `/products/uncategorized/${productSlug}`;
+  if (categorySlug)
+    return `/products/${categorySlug}/${productId}/${productSlug}`;
+  return `/products/uncategorized/${productId}/${productSlug}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
@@ -123,24 +125,25 @@ function buildServiceTreeFromFlat(items: Service[]) {
 }
 
 function ProductDetail({ categories }: { categories: ProductCategory[] }) {
-  const { productSlug } = useParams();
+  const { categorySlug, productId } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
-  console.log("[ProductDetail] productSlug from URL:", productSlug);
+  console.log("[ProductDetail] productId from URL:", productId, "categorySlug:", categorySlug);
   // Extra debug logging
   useEffect(() => {
-    console.log("[ProductDetail][DEBUG] useEffect triggered. productSlug:", productSlug);
-  }, [productSlug]);
+    console.log("[ProductDetail][DEBUG] useEffect triggered. productId:", productId);
+  }, [productId]);
 
   useEffect(() => {
     let mounted = true;
-    if (!productSlug) {
+    if (!productId) {
       setProductLoading(false);
       return;
     }
     setProductLoading(true);
-    console.log("[ProductDetail][DEBUG] Fetching product for slug:", productSlug);
-    fetchProductBySlug(productSlug)
+    console.log("[ProductDetail][DEBUG] Fetching product for id:", productId);
+    // You may want to create a fetchProductById if not present, or adapt fetchProductBySlug to accept id
+    fetchProductBySlug(productId)
       .then((data) => {
         console.log("[ProductDetail][DEBUG] API returned:", data);
         if (mounted) setProduct(data);
@@ -154,7 +157,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return () => {
       mounted = false;
     };
-  }, [productSlug]);
+  }, [productId]);
 
   if (productLoading) {
     return (
@@ -181,11 +184,26 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
 
   const images = sortProductImages(product.images);
   const productCategory = product.category || product.categoryLinks?.[0]?.category || null;
-  const categorySlug = getCategorySlug(productCategory);
+  const categorySlugFromProduct = getCategorySlug(productCategory);
   const categoryName =
     productCategory?.name ||
-    categories.find((category) => getCategorySlug(category) === categorySlug)?.name ||
+    categories.find((category) => getCategorySlug(category) === categorySlugFromProduct)?.name ||
     "Category";
+
+  // Find the full category path for breadcrumbs
+  function getCategoryBreadcrumbs(slug: string | undefined) {
+    if (!slug) return [];
+    const path: ProductCategory[] = [];
+    let current = categories.find((cat) => getCategorySlug(cat) === slug);
+    while (current) {
+      path.unshift(current);
+      if (!current.parentId) break;
+      current = categories.find((cat) => cat.id === current.parentId);
+    }
+    return path;
+  }
+
+  const breadcrumbs = getCategoryBreadcrumbs(categorySlugFromProduct);
 
   return (
     <section className="section product-detail">
@@ -209,15 +227,17 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
             <Link to="/">Home</Link>
             <span className="breadcrumb-sep">/</span>
             <Link to="/products">Products</Link>
-            <span className="breadcrumb-sep">/</span>
-            <Link to={categorySlug ? `/products/${categorySlug}` : "/products"}>
-              {categoryName}
-            </Link>
+            {breadcrumbs.map((cat, idx) => (
+              <span key={cat.id}>
+                <span className="breadcrumb-sep">/</span>
+                <Link to={`/products/${cat.slug || cat.id}`}>{cat.name}</Link>
+              </span>
+            ))}
             <span className="breadcrumb-sep">/</span>
             <span>{product.name}</span>
           </nav>
-          <Link className="back-link" to="/">
-            ← Back to home
+          <Link className="back-link" to={breadcrumbs.length > 0 ? `/products/${breadcrumbs[breadcrumbs.length-1].slug || breadcrumbs[breadcrumbs.length-1].id}` : "/products"}>
+            ← Back to {breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length-1].name : "products"}
           </Link>
           <h1>{product.name}</h1>
           {product.shortDescription && <p className="muted">{product.shortDescription}</p>}
@@ -1356,7 +1376,7 @@ export default function App() {
           />
           <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
-          <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail categories={categories} />} />
+          <Route path="/products/:categorySlug/:productId/:productSlug" element={<ProductDetail categories={categories} />} />
           <Route path="/admin" element={<AdminRedirect />} />
         </Routes>
       </main>
