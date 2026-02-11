@@ -6,7 +6,6 @@ import {
   fetchContactForms,
   fetchMenus,
   fetchPages,
-  fetchProductBySlug,
   fetchProductCategoriesTree,
   fetchProductCategories,
   fetchProductsPage,
