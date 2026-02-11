@@ -1,6 +1,10 @@
 import { apiGet, withTenant } from "./client";
 import type { ContactForm, Menu, Page, Product, ProductCategory, Service } from "./types";
 
+export async function fetchPages(): Promise<Page[]> {
+  return apiGet<Page[]>(withTenant("/public/pages"));
+}
+
 export async function fetchMenus(): Promise<Menu[]> {
   return apiGet<Menu[]>(withTenant("/public/pages/menus"));
 }
