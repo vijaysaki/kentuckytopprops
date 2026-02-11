@@ -133,10 +133,8 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
   return result.items[0] || null;
 }
 
-export async function fetchProductById(productId: string): Promise<Product | null> {
-  // Accept domain as parameter
+export async function fetchProductById(productId: string, domain?: string): Promise<Product | null> {
   try {
-    const domain = arguments.length > 1 ? arguments[1] : undefined;
     const domainParam = domain ? `?domain=${encodeURIComponent(domain)}` : '';
     const response = await apiGet<Product>(
       withTenant(`/public/products/${productId}${domainParam}`)
