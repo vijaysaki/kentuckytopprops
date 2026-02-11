@@ -133,6 +133,15 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
   return result.items[0] || null;
 }
 
+export async function fetchProductById(productId: string): Promise<Product | null> {
+  try {
+    const response = await apiGet<Product>(withTenant(`/public/products/${productId}`));
+    return response || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchProductCategoriesFromProducts(options?: {
   pageSize?: number;
   maxPages?: number;
