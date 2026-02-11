@@ -1,5 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.toString() || "";
-const TENANT_ID = import.meta.env.VITE_TENANT_ID?.toString() || "";
+
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.toString() || "";
+export const TENANT_ID = import.meta.env.VITE_TENANT_ID?.toString() || "";
 
 export function withTenant(path: string): string {
   if (!TENANT_ID) return path;

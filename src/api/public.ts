@@ -1,7 +1,9 @@
 // Fetch product by id
 export async function fetchProductById(id: string): Promise<Product | null> {
   try {
-    const product = await apiGet<Product>(withTenant(`/public/products/${id}`));
+    // Use the correct backend URL: /tenants/<tenantId>/products/<productId>
+    // withTenant will append ?tenantId=... if not present
+    const product = await apiGet<Product>(withTenant(`/tenants/${TENANT_ID}/products/${id}`));
     if (product && product.id === id) return product;
     return null;
   } catch (err) {
