@@ -127,6 +127,10 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
   console.log("[ProductDetail] productSlug from URL:", productSlug);
+  // Extra debug logging
+  useEffect(() => {
+    console.log("[ProductDetail][DEBUG] useEffect triggered. productSlug:", productSlug);
+  }, [productSlug]);
 
   useEffect(() => {
     let mounted = true;
@@ -135,10 +139,14 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
       return;
     }
     setProductLoading(true);
+    console.log("[ProductDetail][DEBUG] Fetching product for slug:", productSlug);
     fetchProductBySlug(productSlug)
       .then((data) => {
-        console.log("[ProductDetail] fetched product for slug", productSlug, data);
+        console.log("[ProductDetail][DEBUG] API returned:", data);
         if (mounted) setProduct(data);
+      })
+      .catch((err) => {
+        console.error("[ProductDetail][DEBUG] fetchProductBySlug error:", err);
       })
       .finally(() => {
         if (mounted) setProductLoading(false);
