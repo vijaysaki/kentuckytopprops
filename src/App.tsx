@@ -6,13 +6,13 @@ import {
   fetchContactForms,
   fetchMenus,
   fetchPages,
+  fetchProductBySlug,
   fetchProductCategoriesTree,
   fetchProductCategories,
   fetchProductsPage,
   fetchServicesTree,
   flattenCategoryTree,
   submitContactForm,
-  fetchProductById,
 } from "./api/public";
 import type {
   ContactForm,
@@ -62,10 +62,9 @@ function getProductCategorySlug(product: Product) {
 
 function getProductPath(product: Product) {
   const categorySlug = getProductCategorySlug(product);
-  const productId = product.id;
   const productSlug = product.slug || product.id;
-  if (categorySlug) return `/products/${categorySlug}/${productId}_${productSlug}`;
-  return `/products/uncategorized/${productId}_${productSlug}`;
+  if (categorySlug) return `/products/${categorySlug}/${productSlug}`;
+  return `/products/uncategorized/${productSlug}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
@@ -125,34 +124,17 @@ function buildServiceTreeFromFlat(items: Service[]) {
 
 function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const { productSlug } = useParams();
-  let id = "";
-  let slug = "";
-  if (productSlug) {
-    const match = productSlug.match(/^([^_]+)_(.*)$/);
-    if (match) {
-      id = match[1];
-      slug = match[2];
-    } else {
-      id = productSlug;
-      slug = "";
-    }
-  }
-
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
-  // Print domain and tenantId for testing
-  const domain = window.location.hostname;
-  const tenantId = import.meta.env.VITE_TENANT_ID;
-
   useEffect(() => {
     let mounted = true;
-    if (!id) {
+    if (!productSlug) {
       setProductLoading(false);
       return;
     }
     setProductLoading(true);
-    fetchProductById(id, domain)
+    fetchProductBySlug(productSlug)
       .then((data) => {
         if (mounted) setProduct(data);
       })
@@ -168,11 +150,10 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return (
       <section className="section">
         <div className="container">
-          {/* Print domain, tenantId, and slug for test */}
+          {/* Print API response for test */}
           <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
-            <strong>Domain:</strong> {domain} <br />
-            <strong>Tenant ID:</strong> {tenantId} <br />
-            <strong>Slug:</strong> {slug}
+            <strong>API Response:</strong>
+            <pre style={{ fontSize: 12, maxWidth: 600, overflowX: 'auto' }}>{JSON.stringify(product, null, 2)}</pre>
           </div>
           <div className="muted">Loading product...</div>
         </div>
@@ -184,11 +165,10 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return (
       <section className="section">
         <div className="container">
-          {/* Print domain, tenantId, and slug for test */}
+          {/* Print API response for test */}
           <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
-            <strong>Domain:</strong> {domain} <br />
-            <strong>Tenant ID:</strong> {tenantId} <br />
-            <strong>Slug:</strong> {slug}
+            <strong>API Response:</strong>
+            <pre style={{ fontSize: 12, maxWidth: 600, overflowX: 'auto' }}>{JSON.stringify(product, null, 2)}</pre>
           </div>
           <div className="muted">Product not found.</div>
           <Link className="btn" to="/">
@@ -210,16 +190,6 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   return (
     <section className="section product-detail">
       <div className="container product-detail-grid">
-        {/* Print domain, tenantId, and slug for test */}
-        <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
-          <strong>Domain:</strong> {domain} <br />
-          <strong>Tenant ID:</strong> {tenantId} <br />
-          <strong>Slug:</strong> {slug}
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <strong>Product ID:</strong> {id} <br />
-          <strong>Slug:</strong> {slug}
-        </div>
         <div className="product-gallery">
           {images.length === 0 ? (
             <div className="product-image-placeholder">No images available.</div>
@@ -600,13 +570,51 @@ export default function App() {
     if (!query) {
       setSearchResults([]);
       setSearchLoading(false);
-      return;
-    }
-    setSearchLoading(true);
-    const timer = setTimeout(() => {
-      fetchProductsPage({ page: 1, pageSize: 8, query })
-        .then((data) => {
-          if (!mounted) return;
+      return (
+        <section className="section product-detail">
+          <div className="container product-detail-grid">
+            {/* Print API response for test */}
+            <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
+              <strong>API Response:</strong>
+              <pre style={{ fontSize: 12, maxWidth: 600, overflowX: 'auto' }}>{JSON.stringify(product, null, 2)}</pre>
+            </div>
+            {/* ...existing code... */}
+            {images.length === 0 ? (
+              <div className="product-image-placeholder">No images available.</div>
+            ) : (
+              images.map((img, index) => (
+                <div key={img.image?.spacesUrl || img.image?.largeUrl || String(index)} className="product-image">
+                  <img
+                    src={getImageUrlFromImage(img.image)}
+                    alt={img.altText || img.title || product.name}
+                  />
+                </div>
+              ))
+            )}
+            <div className="product-info">
+              <nav className="breadcrumbs" aria-label="Breadcrumb">
+                <Link to="/">Home</Link>
+                <span className="breadcrumb-sep">/</span>
+                <Link to="/products">Products</Link>
+                <span className="breadcrumb-sep">/</span>
+                <Link to={categorySlug ? `/products/${categorySlug}` : "/products"}>
+                  {categoryName}
+                </Link>
+                <span className="breadcrumb-sep">/</span>
+                <span>{product.name}</span>
+              </nav>
+              <Link className="back-link" to="/">
+                ← Back to home
+              </Link>
+              <h1>{product.name}</h1>
+              {product.shortDescription && <p className="muted">{product.shortDescription}</p>}
+              {product.descriptionHtml && (
+                <div className="rich" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+              )}
+            </div>
+          </div>
+        </section>
+      );
           setSearchResults(data.items || []);
         })
         .finally(() => {
