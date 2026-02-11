@@ -147,9 +147,8 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
       return;
     }
     setProductLoading(true);
-    const domain = window.location.hostname;
     import("./api/public").then(({ fetchProductById }) => {
-      fetchProductById(id, domain)
+      fetchProductById(id)
         .then((data) => {
           if (mounted) setProduct(data);
         })

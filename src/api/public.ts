@@ -135,9 +135,9 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
 
 export async function fetchProductById(productId: string, domain?: string): Promise<Product | null> {
   try {
-    const domainParam = domain ? `?domain=${encodeURIComponent(domain)}` : '';
+    // withTenant will add tenantId as query param
     const response = await apiGet<Product>(
-      withTenant(`/public/products/${productId}${domainParam}`)
+      withTenant(`/public/products/${productId}`)
     );
     return response || null;
   } catch {
