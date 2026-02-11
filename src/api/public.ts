@@ -1,16 +1,4 @@
-// Fetch product by id
-export async function fetchProductById(id: string): Promise<Product | null> {
-  try {
-    // Use the correct backend URL: /tenants/<tenantId>/products/<productId>
-    // withTenant will append ?tenantId=... if not present
-    const product = await apiGet<Product>(withTenant(`/tenants/${TENANT_ID}/products/${id}`));
-    if (product && product.id === id) return product;
-    return null;
-  } catch (err) {
-    return null;
-  }
-}
-import { apiGet, withTenant, TENANT_ID } from "./client";
+import { apiGet, withTenant } from "./client";
 import type { ContactForm, Menu, Page, Product, ProductCategory, Service } from "./types";
 
 export async function fetchPages(): Promise<Page[]> {

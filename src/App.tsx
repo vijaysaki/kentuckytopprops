@@ -6,6 +6,7 @@ import {
   fetchContactForms,
   fetchMenus,
   fetchPages,
+  fetchProductBySlug,
   fetchProductCategoriesTree,
   fetchProductCategories,
   fetchProductsPage,
@@ -61,11 +62,9 @@ function getProductCategorySlug(product: Product) {
 
 function getProductPath(product: Product) {
   const categorySlug = getProductCategorySlug(product);
-  const productId = product.id;
   const productSlug = product.slug || product.id;
-  if (categorySlug)
-    return `/products/${categorySlug}/${productId}/${productSlug}`;
-  return `/products/uncategorized/${productId}/${productSlug}`;
+  if (categorySlug) return `/products/${categorySlug}/${productSlug}`;
+  return `/products/uncategorized/${productSlug}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
@@ -124,49 +123,28 @@ function buildServiceTreeFromFlat(items: Service[]) {
 }
 
 function ProductDetail({ categories }: { categories: ProductCategory[] }) {
-  const { categorySlug, productId } = useParams();
+  const { productSlug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
-  console.log("[ProductDetail] productId from URL:", productId, "categorySlug:", categorySlug);
-  // Extra debug logging
-  useEffect(() => {
-    console.log("[ProductDetail][DEBUG] useEffect triggered. productId:", productId);
-  }, [productId]);
 
   useEffect(() => {
     let mounted = true;
-    if (!productId) {
+    if (!productSlug) {
       setProductLoading(false);
       return;
     }
     setProductLoading(true);
-    console.log("[ProductDetail][DEBUG] Fetching product for id:", productId);
-    import("./api/public").then(({ fetchProductById }) => {
-      fetchProductById(productId)
-        .then((data) => {
-          console.log("[ProductDetail][DEBUG] fetchProductById API returned:", data);
-          if (mounted) setProduct(data);
-        })
-        .catch(async (err) => {
-          console.error("[ProductDetail][DEBUG] fetchProductById error:", err);
-          if (err && err.response) {
-            try {
-              const text = await err.response.text();
-              console.error("[ProductDetail][DEBUG] Error response text:", text);
-            } catch (e) {
-              console.error("[ProductDetail][DEBUG] Could not read error response text:", e);
-            }
-            console.error("[ProductDetail][DEBUG] Error status:", err.response.status);
-          }
-        })
-        .finally(() => {
-          if (mounted) setProductLoading(false);
-        });
-    });
+    fetchProductBySlug(productSlug)
+      .then((data) => {
+        if (mounted) setProduct(data);
+      })
+      .finally(() => {
+        if (mounted) setProductLoading(false);
+      });
     return () => {
       mounted = false;
     };
-  }, [productId]);
+  }, [productSlug]);
 
   if (productLoading) {
     return (
@@ -193,25 +171,11 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
 
   const images = sortProductImages(product.images);
   const productCategory = product.category || product.categoryLinks?.[0]?.category || null;
-  const categorySlugFromProduct = getCategorySlug(productCategory);
-  // categoryName is not used, so remove it
-
-  // Find the full category path for breadcrumbs
-  function getCategoryBreadcrumbs(slug: string | undefined) {
-    if (!slug) return [];
-    const path: ProductCategory[] = [];
-    let current = categories.find((cat) => getCategorySlug(cat) === slug);
-    while (current) {
-      path.unshift(current);
-      if (!current.parentId) break;
-      const parentId = current.parentId;
-      if (!parentId) break;
-      current = categories.find((cat) => cat.id === parentId);
-    }
-    return path;
-  }
-
-  const breadcrumbs = getCategoryBreadcrumbs(categorySlugFromProduct);
+  const categorySlug = getCategorySlug(productCategory);
+  const categoryName =
+    productCategory?.name ||
+    categories.find((category) => getCategorySlug(category) === categorySlug)?.name ||
+    "Category";
 
   return (
     <section className="section product-detail">
@@ -235,17 +199,15 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
             <Link to="/">Home</Link>
             <span className="breadcrumb-sep">/</span>
             <Link to="/products">Products</Link>
-            {breadcrumbs.map((cat) => (
-              <span key={cat.id}>
-                <span className="breadcrumb-sep">/</span>
-                <Link to={`/products/${cat.slug || cat.id}`}>{cat.name}</Link>
-              </span>
-            ))}
+            <span className="breadcrumb-sep">/</span>
+            <Link to={categorySlug ? `/products/${categorySlug}` : "/products"}>
+              {categoryName}
+            </Link>
             <span className="breadcrumb-sep">/</span>
             <span>{product.name}</span>
           </nav>
-          <Link className="back-link" to={breadcrumbs.length > 0 ? `/products/${breadcrumbs[breadcrumbs.length-1].slug || breadcrumbs[breadcrumbs.length-1].id}` : "/products"}>
-            ← Back to {breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length-1].name : "products"}
+          <Link className="back-link" to="/">
+            ← Back to home
           </Link>
           <h1>{product.name}</h1>
           {product.shortDescription && <p className="muted">{product.shortDescription}</p>}
@@ -272,11 +234,6 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   );
   const categoryId = matchedCategory?.id;
   const categorySlugValue = matchedCategory?.slug || categorySlug;
-
-  // categoryName must be defined in the render scope
-  let categoryName = "Uncategorized";
-  if (matchedCategory?.name) categoryName = matchedCategory.name;
-  else if (categorySlug) categoryName = categorySlug;
 
   useEffect(() => {
     let mounted = true;
@@ -330,7 +287,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
-  // Removed unused variable categoryName
+  const categoryName = matchedCategory?.name || "Products";
   const basePath = categorySlug ? `/products/${categorySlug}` : "/products";
 
   useEffect(() => {
@@ -1389,7 +1346,7 @@ export default function App() {
           />
           <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
-          <Route path="/products/:categorySlug/:productId/:productSlug" element={<ProductDetail categories={categories} />} />
+          <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail categories={categories} />} />
           <Route path="/admin" element={<AdminRedirect />} />
         </Routes>
       </main>
