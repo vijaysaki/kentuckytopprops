@@ -62,9 +62,9 @@ function getProductCategorySlug(product: Product) {
 
 function getProductPath(product: Product) {
   const categorySlug = getProductCategorySlug(product);
-  const productSlug = product.slug || product.id;
-  if (categorySlug) return `/products/${categorySlug}/${productSlug}`;
-  return `/products/uncategorized/${productSlug}`;
+  const productId = product.id;
+  if (categorySlug) return `/products/${categorySlug}/${productId}`;
+  return `/products/uncategorized/${productId}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
