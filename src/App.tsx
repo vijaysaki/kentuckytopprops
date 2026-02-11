@@ -63,8 +63,9 @@ function getProductCategorySlug(product: Product) {
 function getProductPath(product: Product) {
   const categorySlug = getProductCategorySlug(product);
   const productId = product.id;
-  if (categorySlug) return `/products/${categorySlug}/${productId}`;
-  return `/products/uncategorized/${productId}`;
+  const productSlug = product.slug || product.id;
+  if (categorySlug) return `/products/${categorySlug}/${productId}-${productSlug}`;
+  return `/products/uncategorized/${productId}-${productSlug}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
@@ -124,6 +125,21 @@ function buildServiceTreeFromFlat(items: Service[]) {
 
 function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const { productSlug } = useParams();
+  let id = "";
+  let slug = "";
+  if (productSlug) {
+    const match = productSlug.match(/^([^-]+)-(.*)$/);
+    if (match) {
+      id = match[1];
+      slug = match[2];
+    } else {
+      id = productSlug;
+      slug = "";
+    }
+  }
+
+  console.log("Product ID:", id, "Slug:", slug);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
@@ -180,6 +196,10 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   return (
     <section className="section product-detail">
       <div className="container product-detail-grid">
+        <div style={{ marginBottom: 16 }}>
+          <strong>Product ID:</strong> {id} <br />
+          <strong>Slug:</strong> {slug}
+        </div>
         <div className="product-gallery">
           {images.length === 0 ? (
             <div className="product-image-placeholder">No images available.</div>
