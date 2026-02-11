@@ -10,7 +10,7 @@ export async function fetchProductById(id: string): Promise<Product | null> {
     return null;
   }
 }
-import { apiGet, withTenant } from "./client";
+import { apiGet, withTenant, TENANT_ID } from "./client";
 import type { ContactForm, Menu, Page, Product, ProductCategory, Service } from "./types";
 
 export async function fetchPages(): Promise<Page[]> {
