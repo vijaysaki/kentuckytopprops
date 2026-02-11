@@ -136,10 +136,15 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
 
 export async function fetchProductById(productId: string, domain?: string): Promise<Product | null> {
   try {
+    // Build query params for domain and tenantId
+    const searchParams = new URLSearchParams();
+    if (domain) searchParams.set("domain", domain);
     // withTenant will add tenantId as query param
-    const response = await apiGet<Product>(
-      withTenant(`/public/products/${productId}`)
-    );
+    let path = `/public/products/${productId}`;
+    if (searchParams.toString()) {
+      path += `?${searchParams.toString()}`;
+    }
+    const response = await apiGet<Product>(withTenant(path));
     return response || null;
   } catch {
     return null;
