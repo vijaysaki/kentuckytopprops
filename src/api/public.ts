@@ -1,11 +1,12 @@
 // Fetch product by id
 export async function fetchProductById(id: string): Promise<Product | null> {
-  const result = await fetchProductsPage({ page: 1, pageSize: 1, query: undefined });
-  // If backend supports direct id param, use it:
-  // const result = await fetchProductsPage({ id, page: 1, pageSize: 1 });
-  // But fallback to filtering client-side:
-  const product = result.items.find((item) => item.id === id);
-  return product || null;
+  try {
+    const product = await apiGet<Product>(withTenant(`/public/products/${id}`));
+    if (product && product.id === id) return product;
+    return null;
+  } catch (err) {
+    return null;
+  }
 }
 import { apiGet, withTenant } from "./client";
 import type { ContactForm, Menu, Page, Product, ProductCategory, Service } from "./types";

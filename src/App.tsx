@@ -195,8 +195,9 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     while (current) {
       path.unshift(current);
       if (!current.parentId) break;
-      // Defensive: only look up if parentId is defined
-      current = current.parentId ? categories.find((cat) => cat.id === current!.parentId) : undefined;
+      const parentId = current.parentId;
+      if (!parentId) break;
+      current = categories.find((cat) => cat.id === parentId);
     }
     return path;
   }
@@ -263,6 +264,11 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const categoryId = matchedCategory?.id;
   const categorySlugValue = matchedCategory?.slug || categorySlug;
 
+  // categoryName must be defined in the render scope
+  let categoryName = "Uncategorized";
+  if (matchedCategory?.name) categoryName = matchedCategory.name;
+  else if (categorySlug) categoryName = categorySlug;
+
   useEffect(() => {
     let mounted = true;
     if (categorySlug && !categoryId) {
@@ -315,7 +321,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
-  const categoryName = matchedCategory?.name || "Products";
+  // Removed unused variable categoryName
   const basePath = categorySlug ? `/products/${categorySlug}` : "/products";
 
   useEffect(() => {
