@@ -64,8 +64,8 @@ function getProductPath(product: Product) {
   const categorySlug = getProductCategorySlug(product);
   const productId = product.id;
   const productSlug = product.slug || product.id;
-  if (categorySlug) return `/products/${categorySlug}/${productId}-${productSlug}`;
-  return `/products/uncategorized/${productId}-${productSlug}`;
+  if (categorySlug) return `/products/${categorySlug}/${productId}_${productSlug}`;
+  return `/products/uncategorized/${productId}_${productSlug}`;
 }
 
 function sortProductImages(images: ProductImage[] | undefined) {
@@ -128,7 +128,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   let id = "";
   let slug = "";
   if (productSlug) {
-    const match = productSlug.match(/^([^-]+)-(.*)$/);
+    const match = productSlug.match(/^([^_]+)_(.*)$/);
     if (match) {
       id = match[1];
       slug = match[2];
