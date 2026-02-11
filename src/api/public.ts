@@ -134,10 +134,12 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
 }
 
 export async function fetchProductById(productId: string): Promise<Product | null> {
+  // Accept domain as parameter
   try {
-    // Add domain query parameter as requested
+    const domain = arguments.length > 1 ? arguments[1] : undefined;
+    const domainParam = domain ? `?domain=${encodeURIComponent(domain)}` : '';
     const response = await apiGet<Product>(
-      withTenant(`/public/products/${productId}?domain=kentuckytopprops.com`)
+      withTenant(`/public/products/${productId}${domainParam}`)
     );
     return response || null;
   } catch {
