@@ -142,18 +142,19 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     }
     setProductLoading(true);
     console.log("[ProductDetail][DEBUG] Fetching product for id:", productId);
-    // You may want to create a fetchProductById if not present, or adapt fetchProductBySlug to accept id
-    fetchProductBySlug(productId)
-      .then((data) => {
-        console.log("[ProductDetail][DEBUG] API returned:", data);
-        if (mounted) setProduct(data);
-      })
-      .catch((err) => {
-        console.error("[ProductDetail][DEBUG] fetchProductBySlug error:", err);
-      })
-      .finally(() => {
-        if (mounted) setProductLoading(false);
-      });
+    import("./api/public").then(({ fetchProductById }) => {
+      fetchProductById(productId)
+        .then((data) => {
+          console.log("[ProductDetail][DEBUG] fetchProductById API returned:", data);
+          if (mounted) setProduct(data);
+        })
+        .catch((err) => {
+          console.error("[ProductDetail][DEBUG] fetchProductById error:", err);
+        })
+        .finally(() => {
+          if (mounted) setProductLoading(false);
+        });
+    });
     return () => {
       mounted = false;
     };
