@@ -141,6 +141,10 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
+  // Print domain and tenantId for testing
+  const domain = window.location.hostname;
+  const tenantId = import.meta.env.VITE_TENANT_ID;
+
   useEffect(() => {
     let mounted = true;
     if (!id) {
@@ -148,7 +152,6 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
       return;
     }
     setProductLoading(true);
-    const domain = window.location.hostname;
     fetchProductById(id, domain)
       .then((data) => {
         if (mounted) setProduct(data);
@@ -165,6 +168,12 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return (
       <section className="section">
         <div className="container">
+          {/* Print domain, tenantId, and slug for test */}
+          <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
+            <strong>Domain:</strong> {domain} <br />
+            <strong>Tenant ID:</strong> {tenantId} <br />
+            <strong>Slug:</strong> {slug}
+          </div>
           <div className="muted">Loading product...</div>
         </div>
       </section>
@@ -175,6 +184,12 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return (
       <section className="section">
         <div className="container">
+          {/* Print domain, tenantId, and slug for test */}
+          <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
+            <strong>Domain:</strong> {domain} <br />
+            <strong>Tenant ID:</strong> {tenantId} <br />
+            <strong>Slug:</strong> {slug}
+          </div>
           <div className="muted">Product not found.</div>
           <Link className="btn" to="/">
             Back to home
@@ -195,6 +210,12 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   return (
     <section className="section product-detail">
       <div className="container product-detail-grid">
+        {/* Print domain, tenantId, and slug for test */}
+        <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
+          <strong>Domain:</strong> {domain} <br />
+          <strong>Tenant ID:</strong> {tenantId} <br />
+          <strong>Slug:</strong> {slug}
+        </div>
         <div style={{ marginBottom: 16 }}>
           <strong>Product ID:</strong> {id} <br />
           <strong>Slug:</strong> {slug}
