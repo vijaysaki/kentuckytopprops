@@ -12,6 +12,7 @@ import {
   fetchServicesTree,
   flattenCategoryTree,
   submitContactForm,
+  fetchProductById,
 } from "./api/public";
 import type {
   ContactForm,
@@ -148,16 +149,13 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     }
     setProductLoading(true);
     const domain = window.location.hostname;
-    import("./api/public").then((mod) => {
-      // Use the updated fetchProductById signature
-      mod.fetchProductById(id, domain)
-        .then((data) => {
-          if (mounted) setProduct(data);
-        })
-        .finally(() => {
-          if (mounted) setProductLoading(false);
-        });
-    });
+    fetchProductById(id, domain)
+      .then((data) => {
+        if (mounted) setProduct(data);
+      })
+      .finally(() => {
+        if (mounted) setProductLoading(false);
+      });
     return () => {
       mounted = false;
     };
