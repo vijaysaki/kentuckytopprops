@@ -138,29 +138,29 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     }
   }
 
-  console.log("Product ID:", id, "Slug:", slug);
-
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    if (!productSlug) {
+    if (!id) {
       setProductLoading(false);
       return;
     }
     setProductLoading(true);
-    fetchProductBySlug(productSlug)
-      .then((data) => {
-        if (mounted) setProduct(data);
-      })
-      .finally(() => {
-        if (mounted) setProductLoading(false);
-      });
+    import("./api/public").then(({ fetchProductById }) => {
+      fetchProductById(id)
+        .then((data) => {
+          if (mounted) setProduct(data);
+        })
+        .finally(() => {
+          if (mounted) setProductLoading(false);
+        });
+    });
     return () => {
       mounted = false;
     };
-  }, [productSlug]);
+  }, [id]);
 
   if (productLoading) {
     return (
