@@ -144,7 +144,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [productSlug]);
 
   if (productLoading) {
     return (
