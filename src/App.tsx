@@ -329,22 +329,27 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
         ) : (
           <>
             <div className="grid">
-              {items.map((product) => (
-                <Link key={product.id} className="card product-card" to={getProductPath(product)}>
-                  {getImageUrl(product) && (
-                    <div className="card-image">
-                      <img src={getImageUrl(product)} alt={product.name} />
+                {items.map((product) => (
+                  <Link key={product.id} className="card product-card" to={getProductPath(product)}>
+                    {getImageUrl(product) && (
+                      <div className="card-image">
+                        <img src={getImageUrl(product)} alt={product.name} />
+                      </div>
+                    )}
+                    <h3>{product.name}</h3>
+                    <p>{product.shortDescription || "Signature prop from the catalog."}</p>
+                    {/* Display tenantId and product id */}
+                    <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>
+                      Tenant ID: {import.meta.env.VITE_TENANT_ID || 'N/A'}<br />
+                      Product ID: {product.id}
                     </div>
-                  )}
-                  <h3>{product.name}</h3>
-                  <p>{product.shortDescription || "Signature prop from the catalog."}</p>
-                  {product.priceCents && (
-                    <div className="meta">
-                      {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
-                    </div>
-                  )}
-                </Link>
-              ))}
+                    {product.priceCents && (
+                      <div className="meta">
+                        {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
+                      </div>
+                    )}
+                  </Link>
+                ))}
             </div>
             {totalPages > 1 && (
               <div className="pagination">
