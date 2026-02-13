@@ -150,11 +150,6 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return (
       <section className="section">
         <div className="container">
-          {/* Print API response for test */}
-          <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
-            <strong>API Response:</strong>
-            <pre style={{ fontSize: 12, maxWidth: 600, overflowX: 'auto' }}>{JSON.stringify(product, null, 2)}</pre>
-          </div>
           <div className="muted">Loading product...</div>
         </div>
       </section>
@@ -165,11 +160,6 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
     return (
       <section className="section">
         <div className="container">
-          {/* Print API response for test */}
-          <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
-            <strong>API Response:</strong>
-            <pre style={{ fontSize: 12, maxWidth: 600, overflowX: 'auto' }}>{JSON.stringify(product, null, 2)}</pre>
-          </div>
           <div className="muted">Product not found.</div>
           <Link className="btn" to="/">
             Back to home
@@ -329,27 +319,22 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
         ) : (
           <>
             <div className="grid">
-                {items.map((product) => (
-                  <Link key={product.id} className="card product-card" to={getProductPath(product)}>
-                    {getImageUrl(product) && (
-                      <div className="card-image">
-                        <img src={getImageUrl(product)} alt={product.name} />
-                      </div>
-                    )}
-                    <h3>{product.name}</h3>
-                    <p>{product.shortDescription || "Signature prop from the catalog."}</p>
-                    {/* Display tenantId and product id */}
-                    <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>
-                      Tenant ID: {import.meta.env.VITE_TENANT_ID || 'N/A'}<br />
-                      Product ID: {product.id}
+              {items.map((product) => (
+                <Link key={product.id} className="card product-card" to={getProductPath(product)}>
+                  {getImageUrl(product) && (
+                    <div className="card-image">
+                      <img src={getImageUrl(product)} alt={product.name} />
                     </div>
-                    {product.priceCents && (
-                      <div className="meta">
-                        {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
-                      </div>
-                    )}
-                  </Link>
-                ))}
+                  )}
+                  <h3>{product.name}</h3>
+                  <p>{product.shortDescription || "Signature prop from the catalog."}</p>
+                  {product.priceCents && (
+                    <div className="meta">
+                      {product.currency || "USD"} {dollarsFromCents(product.priceCents)}
+                    </div>
+                  )}
+                </Link>
+              ))}
             </div>
             {totalPages > 1 && (
               <div className="pagination">
@@ -575,51 +560,13 @@ export default function App() {
     if (!query) {
       setSearchResults([]);
       setSearchLoading(false);
-      return (
-        <section className="section product-detail">
-          <div className="container product-detail-grid">
-            {/* Print API response for test */}
-            <div style={{ marginBottom: 16, background: '#f8f8f8', padding: 8, borderRadius: 4 }}>
-              <strong>API Response:</strong>
-              <pre style={{ fontSize: 12, maxWidth: 600, overflowX: 'auto' }}>{JSON.stringify(product, null, 2)}</pre>
-            </div>
-            {/* ...existing code... */}
-            {images.length === 0 ? (
-              <div className="product-image-placeholder">No images available.</div>
-            ) : (
-              images.map((img, index) => (
-                <div key={img.image?.spacesUrl || img.image?.largeUrl || String(index)} className="product-image">
-                  <img
-                    src={getImageUrlFromImage(img.image)}
-                    alt={img.altText || img.title || product.name}
-                  />
-                </div>
-              ))
-            )}
-            <div className="product-info">
-              <nav className="breadcrumbs" aria-label="Breadcrumb">
-                <Link to="/">Home</Link>
-                <span className="breadcrumb-sep">/</span>
-                <Link to="/products">Products</Link>
-                <span className="breadcrumb-sep">/</span>
-                <Link to={categorySlug ? `/products/${categorySlug}` : "/products"}>
-                  {categoryName}
-                </Link>
-                <span className="breadcrumb-sep">/</span>
-                <span>{product.name}</span>
-              </nav>
-              <Link className="back-link" to="/">
-                ← Back to home
-              </Link>
-              <h1>{product.name}</h1>
-              {product.shortDescription && <p className="muted">{product.shortDescription}</p>}
-              {product.descriptionHtml && (
-                <div className="rich" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
-              )}
-            </div>
-          </div>
-        </section>
-      );
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      fetchProductsPage({ page: 1, pageSize: 8, query })
+        .then((data) => {
+          if (!mounted) return;
           setSearchResults(data.items || []);
         })
         .finally(() => {
