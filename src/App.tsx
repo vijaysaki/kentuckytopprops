@@ -42,15 +42,6 @@ function getImageUrlFromImage(image?: ProductImage["image"]) {
   return image.largeUrl || image.mediumUrl || image.spacesUrl || image.thumbnailUrl || "";
 }
 
-function stripHtml(value?: string | null) {
-  if (!value) return "";
-  return value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-}
-
-function getPageParentId(page: Page) {
-  return page.parent_id || page.parent?.id || null;
-}
-
 function getCategorySlug(category?: ProductCategory | null) {
   return category?.slug || category?.id || "";
 }
@@ -228,7 +219,6 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const requestedPage = Number.isFinite(pageParam) ? pageParam : 1;
   const [items, setItems] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const matchedCategory = categories.find(
     (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
   );
@@ -546,7 +536,6 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
     Promise.all([
       fetchPages(),
       fetchMenus(),
@@ -595,7 +584,9 @@ export default function App() {
         setProductTotal(productsRes.total || 0);
       })
       .finally(() => {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          // no-op
+        }
       });
     return () => {
       mounted = false;
@@ -1017,6 +1008,7 @@ export default function App() {
                 {contactFormNote && <p className="form-note">{contactFormNote}</p>}
                 <ul>
                   {(() => {
+                    if (!contactForm) return null;
                     const fields = contactForm.fields;
                     const reasonField =
                       findContactField(["reason", "topic", "subject"]) ||
@@ -1041,7 +1033,9 @@ export default function App() {
 
                     return (
                       <>
-                        {reasonField && <li key={reasonField.name}>{renderContactField(reasonField)}</li>}
+                        {reasonField ? (
+                          <li key={reasonField.name}>{renderContactField(reasonField)}</li>
+                        ) : null}
                         {(firstNameField || lastNameField) && (
                           <li className="grid grid-2">
                             <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
@@ -1054,7 +1048,9 @@ export default function App() {
                             <div>{phoneField ? renderContactField(phoneField) : null}</div>
                           </li>
                         )}
-                        {messageField && <li key={messageField.name}>{renderContactField(messageField)}</li>}
+                        {messageField ? (
+                          <li key={messageField.name}>{renderContactField(messageField)}</li>
+                        ) : null}
                         {remaining.map((field) => (
                           <li key={field.name}>{renderContactField(field)}</li>
                         ))}
