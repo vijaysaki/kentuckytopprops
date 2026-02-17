@@ -1028,10 +1028,10 @@ export default function App() {
                 <div>{phoneField ? renderContactField(phoneField) : null}</div>
               </li>
             )}
-            {messageField ? <li key={messageField.name}>{renderContactField(messageField)}</li> : null}
             {remaining.map((field) => (
               <li key={field.name}>{renderContactField(field)}</li>
             ))}
+            {messageField ? <li key={messageField.name}>{renderContactField(messageField)}</li> : null}
             <li className="btn-row">
               <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
                 {contactFormSubmitting ? "Sending..." : "Submit"}
