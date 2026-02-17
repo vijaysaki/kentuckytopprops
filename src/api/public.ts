@@ -129,8 +129,12 @@ export async function fetchProductsPage(params: {
 }
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
-  const result = await fetchProductsPage({ slug, page: 1, pageSize: 1 });
-  return result.items[0] || null;
+  try {
+    return await apiGet<Product>(withTenant(`/public/products/by-slug/${slug}`));
+  } catch {
+    const result = await fetchProductsPage({ slug, page: 1, pageSize: 1 });
+    return result.items[0] || null;
+  }
 }
 
 export async function fetchProductCategoriesFromProducts(options?: {
