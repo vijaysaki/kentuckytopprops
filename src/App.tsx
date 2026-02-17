@@ -530,8 +530,6 @@ export default function App() {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedServiceGroupId, setSelectedServiceGroupId] = useState("all");
-  const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
   const [servicesMenuOpen, setServicesMenuOpen] = useState(false);
@@ -661,7 +659,6 @@ export default function App() {
   const footerMenu = menus.find((m) => m.slug === "footer");
 
   const heroPage = pages.find((p) => p.slug === "home") || pages[0];
-  const aboutPage = pages.find((p) => p.slug === "about");
   const heroImage = useMemo(() => {
     const fromProduct = products.find((product) => getImageUrl(product));
     return fromProduct ? getImageUrl(fromProduct) : "";
@@ -693,32 +690,6 @@ export default function App() {
     };
   }, [search]);
 
-  const serviceGroups = useMemo(() => {
-    return services
-      .filter((service) => !service.parentId)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [services]);
-
-  const filteredServices = useMemo(() => {
-    if (selectedServiceGroupId === "all") return services;
-    return services.filter((service) => {
-      return service.id === selectedServiceGroupId || service.parentId === selectedServiceGroupId;
-    });
-  }, [services, selectedServiceGroupId]);
-
-  const pageGroups = useMemo(() => {
-    return pages
-      .filter((page) => !getPageParentId(page))
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-  }, [pages]);
-
-  const filteredPages = useMemo(() => {
-    if (selectedPageGroupId === "all") return pages;
-    return pages.filter((page) => {
-      const parentId = getPageParentId(page);
-      return page.id === selectedPageGroupId || parentId === selectedPageGroupId;
-    });
-  }, [pages, selectedPageGroupId]);
 
   const categories = useMemo(() => {
     return [...productCategories].sort((a, b) => {
@@ -730,17 +701,6 @@ export default function App() {
   }, [productCategories]);
 
 
-  useEffect(() => {
-    if (selectedServiceGroupId === "all") return;
-    const exists = serviceGroups.some((service) => service.id === selectedServiceGroupId);
-    if (!exists) setSelectedServiceGroupId("all");
-  }, [serviceGroups, selectedServiceGroupId]);
-
-  useEffect(() => {
-    if (selectedPageGroupId === "all") return;
-    const exists = pageGroups.some((page) => page.id === selectedPageGroupId);
-    if (!exists) setSelectedPageGroupId("all");
-  }, [pageGroups, selectedPageGroupId]);
 
 
   const handleContactFieldChange = (field: ContactFormField, value: string) => {
@@ -1358,48 +1318,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section" id="pages">
-          <div className="container">
-            <div className="section-header">
-              <h2>Pages</h2>
-              {pageGroups.length > 0 && (
-                <div className="filter">
-                  <label htmlFor="pageFilter">Group</label>
-                  <select
-                    id="pageFilter"
-                    value={selectedPageGroupId}
-                    onChange={(e) => setSelectedPageGroupId(e.target.value)}
-                  >
-                    <option value="all">All pages</option>
-                    {pageGroups.map((page) => (
-                      <option key={page.id} value={page.id}>
-                        {page.title || page.slug}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-            {loading ? (
-              <div className="muted">Loading pages...</div>
-            ) : pages.length === 0 ? (
-              <div className="muted">No pages found yet.</div>
-            ) : filteredPages.length === 0 ? (
-              <div className="muted">No pages found in this group.</div>
-            ) : (
-              <div className="grid">
-                {filteredPages.map((page) => (
-                  <div key={page.id} className="card">
-                    <h3>{page.title || page.slug}</h3>
-                    <p>{stripHtml(page.content || "").slice(0, 140) || "No content available yet."}</p>
-                    {page.full_path && <div className="meta">{page.full_path}</div>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
+        {false && (
         {false && (
         <section className="section alt" id="contact">
           <div className="container">
@@ -1492,6 +1411,7 @@ export default function App() {
             </section>
           </div>
         </section>
+        )}
         )}
               </>
             }
