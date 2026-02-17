@@ -130,10 +130,15 @@ export async function fetchProductsPage(params: {
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
   try {
-    return await apiGet<Product>(withTenant(`/public/products/by-slug/${slug}`));
+    const product = await apiGet<Product>(withTenant(`/public/products/by-slug/${slug}`));
+    if (product?.slug && product.slug !== slug) {
+      throw new Error("Slug mismatch");
+    }
+    return product;
   } catch {
     const result = await fetchProductsPage({ slug, page: 1, pageSize: 1 });
-    return result.items[0] || null;
+    const match = (result.items || []).find((item) => item.slug === slug || item.id === slug);
+    return match || null;
   }
 }
 
