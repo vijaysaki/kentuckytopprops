@@ -219,6 +219,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const requestedPage = Number.isFinite(pageParam) ? pageParam : 1;
   const [items, setItems] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const matchedCategory = categories.find(
     (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
   );
@@ -519,7 +520,6 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
   const [servicesMenuOpen, setServicesMenuOpen] = useState(false);
@@ -983,6 +983,71 @@ export default function App() {
     });
   };
 
+  const renderContactForm = (form: ContactForm) => {
+    const fields = form.fields;
+    const reasonField =
+      findContactField(["reason", "topic", "subject"]) || fields.find((field) => field.type === "select");
+    const firstNameField =
+      findContactField(["first", "firstname", "given"]) ||
+      fields.find((field) => field.name.toLowerCase().includes("name"));
+    const lastNameField = findContactField(["last", "lastname", "surname", "family"]);
+    const emailField = findContactField(["email"]);
+    const phoneField = findContactField(["phone", "tel", "mobile"]);
+    const messageField =
+      findContactField(["message", "notes", "details", "comment"]) ||
+      fields.find((field) => field.type === "textarea");
+
+    const used = new Set(
+      [reasonField, firstNameField, lastNameField, emailField, phoneField, messageField]
+        .filter(Boolean)
+        .map((field) => field!.name)
+    );
+
+    const remaining = fields.filter((field) => !used.has(field.name));
+
+    return (
+      <form className="my-form" onSubmit={handleContactSubmit} onReset={handleContactReset}>
+        <div className="form-container">
+          <h1>{form.name || "Get in touch!"}</h1>
+          <p className="form-subtitle">
+            {form.description || "Tell us what you need and we’ll reply soon."}
+          </p>
+          {contactFormNote && <p className="form-note">{contactFormNote}</p>}
+          <ul>
+            {reasonField ? <li key={reasonField.name}>{renderContactField(reasonField)}</li> : null}
+            {(firstNameField || lastNameField) && (
+              <li className="grid grid-2">
+                <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
+                <div>{lastNameField ? renderContactField(lastNameField) : null}</div>
+              </li>
+            )}
+            {(emailField || phoneField) && (
+              <li className="grid grid-2">
+                <div>{emailField ? renderContactField(emailField) : null}</div>
+                <div>{phoneField ? renderContactField(phoneField) : null}</div>
+              </li>
+            )}
+            {messageField ? <li key={messageField.name}>{renderContactField(messageField)}</li> : null}
+            {remaining.map((field) => (
+              <li key={field.name}>{renderContactField(field)}</li>
+            ))}
+            <li className="btn-row">
+              <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
+                {contactFormSubmitting ? "Sending..." : "Submit"}
+              </button>
+              <button className="btn" type="reset">
+                Reset
+              </button>
+              <span className="required-msg">* Required fields</span>
+            </li>
+          </ul>
+          {contactFormError && <div className="form-error">{contactFormError}</div>}
+          {contactFormSuccess && <div className="form-success">{contactFormSuccess}</div>}
+        </div>
+      </form>
+    );
+  };
+
   const contactSection = (
     <section className="section alt">
       <div className="container">
@@ -999,78 +1064,7 @@ export default function App() {
           ) : !contactForm ? (
             <div className="muted">Contact form not configured.</div>
           ) : (
-            <form className="my-form" onSubmit={handleContactSubmit} onReset={handleContactReset}>
-              <div className="form-container">
-                <h1>{contactForm.name || "Get in touch!"}</h1>
-                <p className="form-subtitle">
-                  {contactForm.description || "Tell us what you need and we’ll reply soon."}
-                </p>
-                {contactFormNote && <p className="form-note">{contactFormNote}</p>}
-                <ul>
-                  {(() => {
-                    if (!contactForm) return null;
-                    const fields = contactForm.fields;
-                    const reasonField =
-                      findContactField(["reason", "topic", "subject"]) ||
-                      fields.find((field) => field.type === "select");
-                    const firstNameField =
-                      findContactField(["first", "firstname", "given"]) ||
-                      fields.find((field) => field.name.toLowerCase().includes("name"));
-                    const lastNameField = findContactField(["last", "lastname", "surname", "family"]);
-                    const emailField = findContactField(["email"]);
-                    const phoneField = findContactField(["phone", "tel", "mobile"]);
-                    const messageField =
-                      findContactField(["message", "notes", "details", "comment"]) ||
-                      fields.find((field) => field.type === "textarea");
-
-                    const used = new Set(
-                      [reasonField, firstNameField, lastNameField, emailField, phoneField, messageField]
-                        .filter(Boolean)
-                        .map((field) => field!.name)
-                    );
-
-                    const remaining = fields.filter((field) => !used.has(field.name));
-
-                    return (
-                      <>
-                        {reasonField ? (
-                          <li key={reasonField.name}>{renderContactField(reasonField)}</li>
-                        ) : null}
-                        {(firstNameField || lastNameField) && (
-                          <li className="grid grid-2">
-                            <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
-                            <div>{lastNameField ? renderContactField(lastNameField) : null}</div>
-                          </li>
-                        )}
-                        {(emailField || phoneField) && (
-                          <li className="grid grid-2">
-                            <div>{emailField ? renderContactField(emailField) : null}</div>
-                            <div>{phoneField ? renderContactField(phoneField) : null}</div>
-                          </li>
-                        )}
-                        {messageField ? (
-                          <li key={messageField.name}>{renderContactField(messageField)}</li>
-                        ) : null}
-                        {remaining.map((field) => (
-                          <li key={field.name}>{renderContactField(field)}</li>
-                        ))}
-                      </>
-                    );
-                  })()}
-                  <li className="btn-row">
-                    <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
-                      {contactFormSubmitting ? "Sending..." : "Submit"}
-                    </button>
-                    <button className="btn" type="reset">
-                      Reset
-                    </button>
-                    <span className="required-msg">* Required fields</span>
-                  </li>
-                </ul>
-                {contactFormError && <div className="form-error">{contactFormError}</div>}
-                {contactFormSuccess && <div className="form-success">{contactFormSuccess}</div>}
-              </div>
-            </form>
+            renderContactForm(contactForm)
           )}
         </section>
       </div>
