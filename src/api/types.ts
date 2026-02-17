@@ -7,6 +7,8 @@ export type Page = {
   parent_id?: string | null;
   parent?: Page | null;
   sort_order?: number;
+  contact_form_slug?: string;
+  contactFormSlug?: string;
 };
 
 export type MenuItem = {

@@ -522,6 +522,8 @@ a {
 
 .main-content {
   padding-top: calc(var(--header-h) + 20px);
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 h1,

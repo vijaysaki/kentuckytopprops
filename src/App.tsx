@@ -608,7 +608,8 @@ export default function App() {
     navigate(target, { replace: true });
   }, [navigate]);
 
-  const contactFormSlug = contactPage?.slug || "contact";
+  const contactFormSlug =
+    contactPage?.contact_form_slug || contactPage?.contactFormSlug || contactPage?.slug || "contact";
 
   useEffect(() => {
     let mounted = true;
