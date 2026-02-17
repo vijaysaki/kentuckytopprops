@@ -1319,7 +1319,6 @@ export default function App() {
         </section>
 
         {false && (
-        {false && (
         <section className="section alt" id="contact">
           <div className="container">
             <h2>Contact</h2>
@@ -1411,7 +1410,6 @@ export default function App() {
             </section>
           </div>
         </section>
-        )}
         )}
               </>
             }
