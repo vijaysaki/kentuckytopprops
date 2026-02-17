@@ -387,6 +387,120 @@ function ProductsIndexPage({ categories }: { categories: ProductCategory[] }) {
   );
 }
 
+function ServicesIndex({ services }: { services: Service[] }) {
+  const topLevel = services.filter((service) => !service.parentId);
+  return (
+    <section className="section">
+      <div className="container">
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="breadcrumb-sep">/</span>
+          <span>Services</span>
+        </nav>
+        <div className="section-header">
+          <h2>Services</h2>
+        </div>
+        {topLevel.length === 0 ? (
+          <div className="muted">No services found yet.</div>
+        ) : (
+          <div className="grid">
+            {topLevel.map((service) => (
+              <Link
+                key={service.id}
+                className="card"
+                to={`/services/${service.slug || service.id}`}
+              >
+                <h3>{service.name}</h3>
+                <p>{service.description || "Service details available."}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ServiceDetail({ services, loading }: { services: Service[]; loading: boolean }) {
+  const { serviceSlug } = useParams();
+  const service = services.find((item) => item.slug === serviceSlug || item.id === serviceSlug);
+
+  if (loading) {
+    return (
+      <section className="section">
+        <div className="container">
+          <div className="muted">Loading service...</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!service) {
+    return (
+      <section className="section">
+        <div className="container">
+          <div className="muted">Service not found.</div>
+          <Link className="btn" to="/services">
+            Back to services
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="section">
+      <div className="container">
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="breadcrumb-sep">/</span>
+          <Link to="/services">Services</Link>
+          <span className="breadcrumb-sep">/</span>
+          <span>{service.name}</span>
+        </nav>
+        <h1>{service.name}</h1>
+        {service.description && <p className="muted">{service.description}</p>}
+        {(service.durationMinutes || service.basePriceCents) && (
+          <div className="meta">
+            {service.durationMinutes ? `${service.durationMinutes} min` : "Custom duration"}
+            {service.basePriceCents ? ` • $${dollarsFromCents(service.basePriceCents)}` : ""}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PageDetail({ pages }: { pages: Page[] }) {
+  const { slug } = useParams();
+  const page = pages.find((item) => item.slug === slug);
+  if (!page) {
+    return (
+      <section className="section">
+        <div className="container">
+          <div className="muted">Page not found.</div>
+          <Link className="btn" to="/">
+            Back to home
+          </Link>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section className="section">
+      <div className="container">
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="breadcrumb-sep">/</span>
+          <span>{page.title || page.slug}</span>
+        </nav>
+        <h1>{page.title || page.slug}</h1>
+        <div className="rich" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
+      </div>
+    </section>
+  );
+}
+
 function AdminRedirect() {
   useEffect(() => {
     window.location.replace("https://admin.adeptlogics.com");
@@ -853,21 +967,22 @@ export default function App() {
   const renderServiceMenuItems = (nodes: Service[]) => {
     return nodes.map((service) => {
       const children = service.children || [];
+      const slug = service.slug || service.id;
       if (children.length > 0) {
         return (
           <li key={service.id} className="dropdown">
-            <a href="/#services" onClick={handleMobileLinkClick}>
+            <Link to={`/services/${slug}`} onClick={handleMobileLinkClick}>
               {service.name} <span className="caret" aria-hidden="true" />
-            </a>
+            </Link>
             <ul className="dropdown-menu">{renderServiceMenuItems(children)}</ul>
           </li>
         );
       }
       return (
         <li key={service.id}>
-          <a href="/#services" onClick={handleMobileLinkClick}>
+          <Link to={`/services/${slug}`} onClick={handleMobileLinkClick}>
             {service.name}
-          </a>
+          </Link>
         </li>
       );
     });
@@ -898,6 +1013,7 @@ export default function App() {
   const renderServiceMobileDetails = (nodes: Service[]) => {
     return nodes.map((service) => {
       const children = service.children || [];
+      const slug = service.slug || service.id;
       if (children.length > 0) {
         return (
           <details key={service.id}>
@@ -909,12 +1025,101 @@ export default function App() {
         );
       }
       return (
-        <a key={service.id} href="/#services" onClick={handleMobileLinkClick}>
+        <Link key={service.id} to={`/services/${slug}`} onClick={handleMobileLinkClick}>
           {service.name}
-        </a>
+        </Link>
       );
     });
   };
+
+  const contactSection = (
+    <section className="section alt">
+      <div className="container">
+        <h2>Contact</h2>
+        <div
+          className="rich"
+          dangerouslySetInnerHTML={{
+            __html: contactPage?.content || "Contact us to book your next production.",
+          }}
+        />
+        <section className="contact-wrap">
+          {contactFormLoading ? (
+            <div className="muted">Loading contact form...</div>
+          ) : !contactForm ? (
+            <div className="muted">Contact form not configured.</div>
+          ) : (
+            <form className="my-form" onSubmit={handleContactSubmit} onReset={handleContactReset}>
+              <div className="form-container">
+                <h1>{contactForm.name || "Get in touch!"}</h1>
+                <p className="form-subtitle">
+                  {contactForm.description || "Tell us what you need and we’ll reply soon."}
+                </p>
+                {contactFormNote && <p className="form-note">{contactFormNote}</p>}
+                <ul>
+                  {(() => {
+                    const fields = contactForm.fields;
+                    const reasonField =
+                      findContactField(["reason", "topic", "subject"]) ||
+                      fields.find((field) => field.type === "select");
+                    const firstNameField =
+                      findContactField(["first", "firstname", "given"]) ||
+                      fields.find((field) => field.name.toLowerCase().includes("name"));
+                    const lastNameField = findContactField(["last", "lastname", "surname", "family"]);
+                    const emailField = findContactField(["email"]);
+                    const phoneField = findContactField(["phone", "tel", "mobile"]);
+                    const messageField =
+                      findContactField(["message", "notes", "details", "comment"]) ||
+                      fields.find((field) => field.type === "textarea");
+
+                    const used = new Set(
+                      [reasonField, firstNameField, lastNameField, emailField, phoneField, messageField]
+                        .filter(Boolean)
+                        .map((field) => field!.name)
+                    );
+
+                    const remaining = fields.filter((field) => !used.has(field.name));
+
+                    return (
+                      <>
+                        {reasonField && <li key={reasonField.name}>{renderContactField(reasonField)}</li>}
+                        {(firstNameField || lastNameField) && (
+                          <li className="grid grid-2">
+                            <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
+                            <div>{lastNameField ? renderContactField(lastNameField) : null}</div>
+                          </li>
+                        )}
+                        {(emailField || phoneField) && (
+                          <li className="grid grid-2">
+                            <div>{emailField ? renderContactField(emailField) : null}</div>
+                            <div>{phoneField ? renderContactField(phoneField) : null}</div>
+                          </li>
+                        )}
+                        {messageField && <li key={messageField.name}>{renderContactField(messageField)}</li>}
+                        {remaining.map((field) => (
+                          <li key={field.name}>{renderContactField(field)}</li>
+                        ))}
+                      </>
+                    );
+                  })()}
+                  <li className="btn-row">
+                    <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
+                      {contactFormSubmitting ? "Sending..." : "Submit"}
+                    </button>
+                    <button className="btn" type="reset">
+                      Reset
+                    </button>
+                    <span className="required-msg">* Required fields</span>
+                  </li>
+                </ul>
+                {contactFormError && <div className="form-error">{contactFormError}</div>}
+                {contactFormSuccess && <div className="form-success">{contactFormSuccess}</div>}
+              </div>
+            </form>
+          )}
+        </section>
+      </div>
+    </section>
+  );
 
   return (
     <div className="site">
@@ -988,14 +1193,14 @@ export default function App() {
               </ul>
             </li>
             <li>
-              <a href="/#about" onClick={handleMobileLinkClick}>
+              <Link to="/pages/about" onClick={handleMobileLinkClick}>
                 About
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/#contact" onClick={handleMobileLinkClick}>
+              <Link to="/contact" onClick={handleMobileLinkClick}>
                 Contact
-              </a>
+              </Link>
             </li>
             <li className="mnav" aria-hidden="true">
               <details>
@@ -1026,12 +1231,12 @@ export default function App() {
                         : renderServiceMobileDetails(services)}
                     </div>
                   </details>
-                  <a href="/#about" onClick={handleMobileLinkClick}>
+                  <Link to="/pages/about" onClick={handleMobileLinkClick}>
                     About
-                  </a>
-                  <a href="/#contact" onClick={handleMobileLinkClick}>
+                  </Link>
+                  <Link to="/contact" onClick={handleMobileLinkClick}>
                     Contact
-                  </a>
+                  </Link>
                 </div>
               </details>
             </li>
@@ -1114,12 +1319,12 @@ export default function App() {
                 dangerouslySetInnerHTML={{ __html: heroPage?.content || "Modern prop rentals for every production." }}
               />
               <div className="hero-actions">
-                <a className="btn primary" href="#products">
+                <Link className="btn primary" to="/products">
                   Explore Catalog
-                </a>
-                <a className="btn" href="#services">
+                </Link>
+                <Link className="btn" to="/services">
                   View Services
-                </a>
+                </Link>
               </div>
               <div className="hero-metrics">
                 <div>
@@ -1150,51 +1355,6 @@ export default function App() {
                 </div>
               )}
             </div>
-          </div>
-        </section>
-
-        <section className="section" id="services">
-          <div className="container">
-            <div className="section-header">
-              <h2>Services</h2>
-              {serviceGroups.length > 0 && (
-                <div className="filter">
-                  <label htmlFor="serviceFilter">Group</label>
-                  <select
-                    id="serviceFilter"
-                    value={selectedServiceGroupId}
-                    onChange={(e) => setSelectedServiceGroupId(e.target.value)}
-                  >
-                    <option value="all">All services</option>
-                    {serviceGroups.map((service) => (
-                      <option key={service.id} value={service.id}>
-                        {service.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-            {loading ? (
-              <div className="muted">Loading services...</div>
-            ) : services.length === 0 ? (
-              <div className="muted">No services found yet.</div>
-            ) : filteredServices.length === 0 ? (
-              <div className="muted">No services found in this group.</div>
-            ) : (
-              <div className="grid">
-                {filteredServices.map((service) => (
-                  <div key={service.id} className="card">
-                    <h3>{service.name}</h3>
-                    <p>{service.description || "Custom service tailored for your project."}</p>
-                    <div className="meta">
-                      {service.durationMinutes ? `${service.durationMinutes} min` : "Custom duration"}
-                      {service.basePriceCents ? ` • $${dollarsFromCents(service.basePriceCents)}` : ""}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </section>
 
@@ -1240,16 +1400,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section" id="about">
-          <div className="container">
-            <h2>About</h2>
-            <div
-              className="rich"
-              dangerouslySetInnerHTML={{ __html: aboutPage?.content || "Tell your story here." }}
-            />
-          </div>
-        </section>
-
+        {false && (
         <section className="section alt" id="contact">
           <div className="container">
             <h2>Contact</h2>
@@ -1341,12 +1492,17 @@ export default function App() {
             </section>
           </div>
         </section>
+        )}
               </>
             }
           />
           <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
           <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail categories={categories} />} />
+          <Route path="/services" element={<ServicesIndex services={services} />} />
+          <Route path="/services/:serviceSlug" element={<ServiceDetail services={services} loading={servicesLoading} />} />
+          <Route path="/contact" element={contactSection} />
+          <Route path="/pages/:slug" element={<PageDetail pages={pages} />} />
           <Route path="/admin" element={<AdminRedirect />} />
         </Routes>
       </main>
@@ -1359,7 +1515,7 @@ export default function App() {
               <ul>
                 {(footerMenu?.items || headerMenu?.items || []).slice(0, 4).map((item) => {
                   const label = item.label || item.page?.title || "Link";
-                  const href = item.external_url || `#${item.page?.slug || "section"}`;
+                  const href = item.external_url || (item.page?.slug ? `/pages/${item.page.slug}` : "#");
                   return (
                     <li key={item.id}>
                       <a href={href}>{label}</a>
@@ -1373,7 +1529,7 @@ export default function App() {
               <ul>
                 {(footerMenu?.items || headerMenu?.items || []).slice(4, 8).map((item) => {
                   const label = item.label || item.page?.title || "Link";
-                  const href = item.external_url || `#${item.page?.slug || "section"}`;
+                  const href = item.external_url || (item.page?.slug ? `/pages/${item.page.slug}` : "#");
                   return (
                     <li key={item.id}>
                       <a href={href}>{label}</a>
@@ -1387,7 +1543,7 @@ export default function App() {
               <ul>
                 {services.slice(0, 4).map((service) => (
                   <li key={service.id}>
-                    <a href="/#services">{service.name}</a>
+                    <a href={`/services/${service.slug || service.id}`}>{service.name}</a>
                   </li>
                 ))}
               </ul>
