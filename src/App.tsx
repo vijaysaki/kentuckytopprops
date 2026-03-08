@@ -43,9 +43,7 @@ function getImageUrlFromImage(image?: ProductImage["image"]) {
 }
 
 function stripHtml(value?: string | null) {
-  if (!value) return "";
-  return value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-}
+// ...existing code...
 
 function getPageParentId(page: Page) {
   return page.parent_id || page.parent?.id || null;
@@ -121,6 +119,7 @@ function buildServiceTreeFromFlat(items: Service[]) {
   });
   return roots;
 }
+  // Function removed to resolve warnings
 
 function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const { productSlug } = useParams();
@@ -489,21 +488,21 @@ export default function App() {
             setItems(incoming);
             setTotal(data.total || incoming.length);
           }
-        })
-          : buildCategoryTreeFromFlat(flatCategories);
-        setProductCategoriesTree(normalizedCategoriesTree);
-        setProductCategories(
-          normalizedCategoriesTree.length
-            ? flattenCategoryTree(normalizedCategoriesTree)
-            : flatCategories
-        );
-        setProductCategoriesLoading(false);
-        setProducts(productsRes.items || []);
-        setProductTotal(productsRes.total || 0);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+        });
+      const normalizedCategoriesTree = buildCategoryTreeFromFlat(flatCategories);
+      setProductCategoriesTree(normalizedCategoriesTree);
+      setProductCategories(
+        normalizedCategoriesTree.length
+          ? flattenCategoryTree(normalizedCategoriesTree)
+          : flatCategories
+      );
+      setProductCategoriesLoading(false);
+      setProducts(productsRes.items || []);
+      setProductTotal(productsRes.total || 0);
+    })
+    .finally(() => {
+      if (mounted) setLoading(false);
+    });
     return () => {
       mounted = false;
     };
