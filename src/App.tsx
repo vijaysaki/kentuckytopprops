@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
 import { fetchProductsPage } from "./api/public";
@@ -20,7 +20,7 @@ type ProductCategory = {
   slug?: string;
 };
 
-function ProductsCategoryPage({ categories }: { categories: ProductCategory[] }) {
+function ProductsCategoryPage(_: { categories: ProductCategory[] }) {
   const { categorySlug } = useParams();
   const [searchParams] = useSearchParams();
   const [pageSize, setPageSize] = useState(20);
