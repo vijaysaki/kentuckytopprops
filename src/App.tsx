@@ -488,24 +488,25 @@ export default function App() {
             setItems(incoming);
             setTotal(data.total || incoming.length);
           }
+        })
+        .then(() => {
+          const normalizedCategoriesTree = buildCategoryTreeFromFlat(flatCategories);
+          setProductCategoriesTree(normalizedCategoriesTree);
+          setProductCategories(
+            normalizedCategoriesTree.length
+              ? flattenCategoryTree(normalizedCategoriesTree)
+              : flatCategories
+          );
+          setProductCategoriesLoading(false);
+          setProducts(productsRes.items || []);
+          setProductTotal(productsRes.total || 0);
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
         });
-      const normalizedCategoriesTree = buildCategoryTreeFromFlat(flatCategories);
-      setProductCategoriesTree(normalizedCategoriesTree);
-      setProductCategories(
-        normalizedCategoriesTree.length
-          ? flattenCategoryTree(normalizedCategoriesTree)
-          : flatCategories
-      );
-      setProductCategoriesLoading(false);
-      setProducts(productsRes.items || []);
-      setProductTotal(productsRes.total || 0);
-      return () => {
-        mounted = false;
-      };
-    })
-    .finally(() => {
-      if (mounted) setLoading(false);
-    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
