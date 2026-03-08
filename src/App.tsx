@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
 import {
   fetchContactFormBySlug,
@@ -14,6 +14,9 @@ import {
   flattenCategoryTree,
   submitContactForm,
 } from "./api/public";
+import { CategoryCardSkeleton } from "./components/CategoryCardSkeleton";
+import { ProductCardSkeleton } from "./components/ProductCardSkeleton";
+import { ServiceCardSkeleton } from "./components/ServiceCardSkeleton";
 import type {
   ContactForm,
   ContactFormField,
@@ -220,53 +223,30 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const [items, setItems] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const matchedCategory = categories.find(
     (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
   );
   const categoryId = matchedCategory?.id;
-  const categorySlugValue = matchedCategory?.slug || categorySlug;
+  // Prefer categorySlug from URL (source of truth) so fetch works even before categories load
+  const slugForApi = categorySlug || matchedCategory?.slug;
 
   useEffect(() => {
     let mounted = true;
-    if (categorySlug && !categoryId) {
-      setItems([]);
-      setTotal(0);
-      setLoading(false);
-      return () => {
-        mounted = false;
-      };
-    }
     setLoading(true);
+    setFetchError(false);
     fetchProductsPage({
       page: requestedPage,
       pageSize,
       categoryId: categoryId || undefined,
-      categorySlug: categorySlugValue || undefined,
+      categorySlug: slugForApi || undefined,
     })
       .then((data) => {
         if (!mounted) return;
+        setFetchError(Boolean(data.error));
         const incoming = data.items || [];
-        if (categoryId || categorySlugValue) {
-          const filtered = incoming.filter((product) => {
-            const direct = product.category;
-            if (direct) {
-              if (categoryId && direct.id === categoryId) return true;
-              if (categorySlugValue && direct.slug === categorySlugValue) return true;
-            }
-            return (product.categoryLinks || []).some((link) => {
-              const cat = link.category;
-              if (!cat) return false;
-              if (categoryId && cat.id === categoryId) return true;
-              if (categorySlugValue && cat.slug === categorySlugValue) return true;
-              return false;
-            });
-          });
-          setItems(filtered);
-          setTotal(filtered.length);
-        } else {
-          setItems(incoming);
-          setTotal(data.total || incoming.length);
-        }
+        setItems(incoming);
+        setTotal(data.total ?? incoming.length);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -274,7 +254,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
     return () => {
       mounted = false;
     };
-  }, [categoryId, categorySlug, requestedPage]);
+  }, [categoryId, slugForApi, requestedPage]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
@@ -304,7 +284,16 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
           </div>
         </div>
         {loading ? (
-          <div className="muted">Loading products...</div>
+          <div className="grid">
+            {Array.from({ length: 8 }, (_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : fetchError ? (
+          <div className="muted">
+            Unable to load products. Please{" "}
+            <Link to="/products">try again</Link> or check your connection.
+          </div>
         ) : items.length === 0 ? (
           <div className="muted">No products found in this category.</div>
         ) : (
@@ -364,21 +353,65 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   );
 }
 
-function ProductsIndexPage({ categories }: { categories: ProductCategory[] }) {
-  if (categories.length > 0) {
-    const first = getCategorySlug(categories[0]);
-    if (first) return <Navigate to={`/products/${first}`} replace />;
+function ProductsIndexPage({
+  categories,
+  loading,
+}: {
+  categories: ProductCategory[];
+  loading?: boolean;
+}) {
+  if (!loading && categories.length === 0) {
+    return (
+      <section className="section">
+        <div className="container">
+          <nav className="breadcrumbs" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span className="breadcrumb-sep">/</span>
+            <span>Products</span>
+          </nav>
+          <div className="section-header">
+            <h2>Products</h2>
+          </div>
+          <div className="muted">No product categories available.</div>
+        </div>
+      </section>
+    );
   }
   return (
     <section className="section">
       <div className="container">
-        <div className="muted">No product categories available.</div>
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="breadcrumb-sep">/</span>
+          <span>Products</span>
+        </nav>
+        <div className="section-header">
+          <h2>Products</h2>
+        </div>
+        {loading ? (
+          <div className="grid">
+            {Array.from({ length: 8 }, (_, i) => (
+              <CategoryCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid">
+            {categories.map((category) => {
+              const slug = getCategorySlug(category);
+              return (
+                <Link key={category.id} className="card" to={`/products/${slug}`}>
+                  <h3>{category.name}</h3>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
-function ServicesIndex({ services }: { services: Service[] }) {
+function ServicesIndex({ services, loading }: { services: Service[]; loading?: boolean }) {
   const topLevel = services.filter((service) => !service.parentId);
   return (
     <section className="section">
@@ -391,7 +424,13 @@ function ServicesIndex({ services }: { services: Service[] }) {
         <div className="section-header">
           <h2>Services</h2>
         </div>
-        {topLevel.length === 0 ? (
+        {loading ? (
+          <div className="grid">
+            {Array.from({ length: 6 }, (_, i) => (
+              <ServiceCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : topLevel.length === 0 ? (
           <div className="muted">No services found yet.</div>
         ) : (
           <div className="grid">
@@ -507,6 +546,8 @@ function AdminRedirect() {
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -515,8 +556,8 @@ export default function App() {
   const [productTotal, setProductTotal] = useState(0);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [productCategoriesTree, setProductCategoriesTree] = useState<ProductCategory[]>([]);
-  const [productCategoriesLoading, setProductCategoriesLoading] = useState(true);
-  const [servicesLoading, setServicesLoading] = useState(true);
+  const [productCategoriesLoading, setProductCategoriesLoading] = useState(false);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -534,40 +575,58 @@ export default function App() {
   const [contactFormSuccess, setContactFormSuccess] = useState<string | null>(null);
   const contactPage = pages.find((p) => p.slug === "contact");
 
+  // Core layout: pages and menus only (needed for header, footer, routes)
   useEffect(() => {
     let mounted = true;
-    Promise.all([
-      fetchPages(),
-      fetchMenus(),
-      fetchServicesTree(),
-      fetchProductCategoriesTree(),
-      fetchProductCategories(),
-      fetchProductsPage({ page: 1, pageSize: 20 }),
-    ])
-      .then(
-        ([
-          pagesRes,
-          menusRes,
-          servicesTreeRes,
-          categoriesTreeRes,
-          categoriesFlatRes,
-          productsRes,
-        ]) => {
+    Promise.all([fetchPages(), fetchMenus()])
+      .then(([pagesRes, menusRes]) => {
         if (!mounted) return;
         setPages(pagesRes || []);
         setMenus(menusRes || []);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Lazy: fetch services only when visiting /services or opening services menu
+  const needServices = pathname.startsWith("/services") || servicesMenuOpen;
+  useEffect(() => {
+    if (!needServices) return;
+    let mounted = true;
+    setServicesLoading(true);
+    fetchServicesTree()
+      .then((servicesTreeRes) => {
+        if (!mounted) return;
         const nextServicesTree: Service[] = servicesTreeRes || [];
-        const hasServiceChildren = nextServicesTree.some((service) => service.children?.length);
-        const normalizedServicesTree =
+        const hasServiceChildren = nextServicesTree.some((s) => s.children?.length);
+        const normalized =
           nextServicesTree.length && !hasServiceChildren
             ? buildServiceTreeFromFlat(nextServicesTree)
             : nextServicesTree;
-        setServicesTree(normalizedServicesTree);
-        setServices(flattenServicesTree(normalizedServicesTree));
-        setServicesLoading(false);
+        setServicesTree(normalized);
+        setServices(flattenServicesTree(normalized));
+      })
+      .finally(() => {
+        if (mounted) setServicesLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [needServices]);
+
+  // Lazy: fetch product categories only when visiting /products or opening products menu
+  const needCategories = pathname.startsWith("/products") || productsMenuOpen;
+  useEffect(() => {
+    if (!needCategories) return;
+    let mounted = true;
+    setProductCategoriesLoading(true);
+    Promise.all([fetchProductCategoriesTree(), fetchProductCategories()])
+      .then(([categoriesTreeRes, categoriesFlatRes]) => {
+        if (!mounted) return;
         const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
         const flatCategories: ProductCategory[] = categoriesFlatRes || [];
-        const hasCategoryChildren = nextCategoriesTree.some((category) => category.children?.length);
+        const hasCategoryChildren = nextCategoriesTree.some((c) => c.children?.length);
         const normalizedCategoriesTree = nextCategoriesTree.length
           ? hasCategoryChildren
             ? nextCategoriesTree
@@ -579,19 +638,29 @@ export default function App() {
             ? flattenCategoryTree(normalizedCategoriesTree)
             : flatCategories
         );
-        setProductCategoriesLoading(false);
-        setProducts(productsRes.items || []);
-        setProductTotal(productsRes.total || 0);
       })
       .finally(() => {
-        if (mounted) {
-          // no-op
-        }
+        if (mounted) setProductCategoriesLoading(false);
       });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [needCategories]);
+
+  // Lazy: fetch hero products only when on home page
+  const isHome = pathname === "/" || pathname === "";
+  useEffect(() => {
+    if (!isHome) return;
+    let mounted = true;
+    fetchProductsPage({ limit: 4, offset: 0 }).then((productsRes) => {
+      if (!mounted) return;
+      setProducts(productsRes.items || []);
+      setProductTotal(productsRes.total || 0);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [isHome]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1313,10 +1382,18 @@ export default function App() {
               </>
             }
           />
-          <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
+          <Route
+            path="/products"
+            element={
+              <ProductsIndexPage
+                categories={categories}
+                loading={productCategoriesLoading}
+              />
+            }
+          />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
           <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail categories={categories} />} />
-          <Route path="/services" element={<ServicesIndex services={services} />} />
+          <Route path="/services" element={<ServicesIndex services={services} loading={servicesLoading} />} />
           <Route path="/services/:serviceSlug" element={<ServiceDetail services={services} loading={servicesLoading} />} />
           <Route path="/contact" element={contactSection} />
           <Route path="/pages/:slug" element={<PageDetail pages={pages} />} />
