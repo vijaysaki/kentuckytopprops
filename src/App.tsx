@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
-import "./navbar.css";
 import { fetchProductsPage } from "./api/public";
 
 // Minimal Product and ProductCategory types
