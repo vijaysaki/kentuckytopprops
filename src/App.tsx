@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
 import {
   fetchContactFormBySlug,
@@ -14,9 +14,6 @@ import {
   flattenCategoryTree,
   submitContactForm,
 } from "./api/public";
-import { CategoryCardSkeleton } from "./components/CategoryCardSkeleton";
-import { ProductCardSkeleton } from "./components/ProductCardSkeleton";
-import { ServiceCardSkeleton } from "./components/ServiceCardSkeleton";
 import type {
   ContactForm,
   ContactFormField,
@@ -43,6 +40,15 @@ function getImageUrl(p: Product) {
 function getImageUrlFromImage(image?: ProductImage["image"]) {
   if (!image) return "";
   return image.largeUrl || image.mediumUrl || image.spacesUrl || image.thumbnailUrl || "";
+}
+
+function stripHtml(value?: string | null) {
+  if (!value) return "";
+  return value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function getPageParentId(page: Page) {
+  return page.parent_id || page.parent?.id || null;
 }
 
 function getCategorySlug(category?: ProductCategory | null) {
@@ -223,30 +229,53 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   const [items, setItems] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
   const matchedCategory = categories.find(
     (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
   );
   const categoryId = matchedCategory?.id;
-  // Prefer categorySlug from URL (source of truth) so fetch works even before categories load
-  const slugForApi = categorySlug || matchedCategory?.slug;
+  const categorySlugValue = matchedCategory?.slug || categorySlug;
 
   useEffect(() => {
     let mounted = true;
+    if (categorySlug && !categoryId) {
+      setItems([]);
+      setTotal(0);
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
     setLoading(true);
-    setFetchError(false);
     fetchProductsPage({
       page: requestedPage,
       pageSize,
       categoryId: categoryId || undefined,
-      categorySlug: slugForApi || undefined,
+      categorySlug: categorySlugValue || undefined,
     })
       .then((data) => {
         if (!mounted) return;
-        setFetchError(Boolean(data.error));
         const incoming = data.items || [];
-        setItems(incoming);
-        setTotal(data.total ?? incoming.length);
+        if (categoryId || categorySlugValue) {
+          const filtered = incoming.filter((product) => {
+            const direct = product.category;
+            if (direct) {
+              if (categoryId && direct.id === categoryId) return true;
+              if (categorySlugValue && direct.slug === categorySlugValue) return true;
+            }
+            return (product.categoryLinks || []).some((link) => {
+              const cat = link.category;
+              if (!cat) return false;
+              if (categoryId && cat.id === categoryId) return true;
+              if (categorySlugValue && cat.slug === categorySlugValue) return true;
+              return false;
+            });
+          });
+          setItems(filtered);
+          setTotal(filtered.length);
+        } else {
+          setItems(incoming);
+          setTotal(data.total || incoming.length);
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -254,7 +283,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
     return () => {
       mounted = false;
     };
-  }, [categoryId, slugForApi, requestedPage]);
+  }, [categoryId, categorySlug, requestedPage]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
@@ -284,16 +313,7 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
           </div>
         </div>
         {loading ? (
-          <div className="grid">
-            {Array.from({ length: 8 }, (_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : fetchError ? (
-          <div className="muted">
-            Unable to load products. Please{" "}
-            <Link to="/products">try again</Link> or check your connection.
-          </div>
+          <div className="muted">Loading products...</div>
         ) : items.length === 0 ? (
           <div className="muted">No products found in this category.</div>
         ) : (
@@ -353,179 +373,15 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
   );
 }
 
-function ProductsIndexPage({
-  categories,
-  loading,
-}: {
-  categories: ProductCategory[];
-  loading?: boolean;
-}) {
-  if (!loading && categories.length === 0) {
-    return (
-      <section className="section">
-        <div className="container">
-          <nav className="breadcrumbs" aria-label="Breadcrumb">
-            <Link to="/">Home</Link>
-            <span className="breadcrumb-sep">/</span>
-            <span>Products</span>
-          </nav>
-          <div className="section-header">
-            <h2>Products</h2>
-          </div>
-          <div className="muted">No product categories available.</div>
-        </div>
-      </section>
-    );
+function ProductsIndexPage({ categories }: { categories: ProductCategory[] }) {
+  if (categories.length > 0) {
+    const first = getCategorySlug(categories[0]);
+    if (first) return <Navigate to={`/products/${first}`} replace />;
   }
   return (
     <section className="section">
       <div className="container">
-        <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <Link to="/">Home</Link>
-          <span className="breadcrumb-sep">/</span>
-          <span>Products</span>
-        </nav>
-        <div className="section-header">
-          <h2>Products</h2>
-        </div>
-        {loading ? (
-          <div className="grid">
-            {Array.from({ length: 8 }, (_, i) => (
-              <CategoryCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid">
-            {categories.map((category) => {
-              const slug = getCategorySlug(category);
-              return (
-                <Link key={category.id} className="card" to={`/products/${slug}`}>
-                  <h3>{category.name}</h3>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function ServicesIndex({ services, loading }: { services: Service[]; loading?: boolean }) {
-  const topLevel = services.filter((service) => !service.parentId);
-  return (
-    <section className="section">
-      <div className="container">
-        <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <Link to="/">Home</Link>
-          <span className="breadcrumb-sep">/</span>
-          <span>Services</span>
-        </nav>
-        <div className="section-header">
-          <h2>Services</h2>
-        </div>
-        {loading ? (
-          <div className="grid">
-            {Array.from({ length: 6 }, (_, i) => (
-              <ServiceCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : topLevel.length === 0 ? (
-          <div className="muted">No services found yet.</div>
-        ) : (
-          <div className="grid">
-            {topLevel.map((service) => (
-              <Link
-                key={service.id}
-                className="card"
-                to={`/services/${service.slug || service.id}`}
-              >
-                <h3>{service.name}</h3>
-                <p>{service.description || "Service details available."}</p>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function ServiceDetail({ services, loading }: { services: Service[]; loading: boolean }) {
-  const { serviceSlug } = useParams();
-  const service = services.find((item) => item.slug === serviceSlug || item.id === serviceSlug);
-
-  if (loading) {
-    return (
-      <section className="section">
-        <div className="container">
-          <div className="muted">Loading service...</div>
-        </div>
-      </section>
-    );
-  }
-
-  if (!service) {
-    return (
-      <section className="section">
-        <div className="container">
-          <div className="muted">Service not found.</div>
-          <Link className="btn" to="/services">
-            Back to services
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="section">
-      <div className="container">
-        <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <Link to="/">Home</Link>
-          <span className="breadcrumb-sep">/</span>
-          <Link to="/services">Services</Link>
-          <span className="breadcrumb-sep">/</span>
-          <span>{service.name}</span>
-        </nav>
-        <h1>{service.name}</h1>
-        {service.description && <p className="muted">{service.description}</p>}
-        {(service.durationMinutes || service.basePriceCents) && (
-          <div className="meta">
-            {service.durationMinutes ? `${service.durationMinutes} min` : "Custom duration"}
-            {service.basePriceCents ? ` • $${dollarsFromCents(service.basePriceCents)}` : ""}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function PageDetail({ pages }: { pages: Page[] }) {
-  const { slug } = useParams();
-  const page = pages.find((item) => item.slug === slug);
-  if (!page) {
-    return (
-      <section className="section">
-        <div className="container">
-          <div className="muted">Page not found.</div>
-          <Link className="btn" to="/">
-            Back to home
-          </Link>
-        </div>
-      </section>
-    );
-  }
-  return (
-    <section className="section">
-      <div className="container">
-        <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <Link to="/">Home</Link>
-          <span className="breadcrumb-sep">/</span>
-          <span>{page.title || page.slug}</span>
-        </nav>
-        <h1>{page.title || page.slug}</h1>
-        <div className="rich" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
+        <div className="muted">No product categories available.</div>
       </div>
     </section>
   );
@@ -546,8 +402,6 @@ function AdminRedirect() {
 
 export default function App() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const pathname = location.pathname;
   const [pages, setPages] = useState<Page[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -556,11 +410,14 @@ export default function App() {
   const [productTotal, setProductTotal] = useState(0);
   const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [productCategoriesTree, setProductCategoriesTree] = useState<ProductCategory[]>([]);
-  const [productCategoriesLoading, setProductCategoriesLoading] = useState(false);
-  const [servicesLoading, setServicesLoading] = useState(false);
+  const [productCategoriesLoading, setProductCategoriesLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedServiceGroupId, setSelectedServiceGroupId] = useState("all");
+  const [selectedPageGroupId, setSelectedPageGroupId] = useState("all");
   const [logoVisible, setLogoVisible] = useState(true);
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
   const [servicesMenuOpen, setServicesMenuOpen] = useState(false);
@@ -575,18 +432,16 @@ export default function App() {
   const [contactFormSuccess, setContactFormSuccess] = useState<string | null>(null);
   const contactPage = pages.find((p) => p.slug === "contact");
 
-  // Load everything on init (simple approach - like before)
   useEffect(() => {
     let mounted = true;
-    setServicesLoading(true);
-    setProductCategoriesLoading(true);
+    setLoading(true);
     Promise.all([
       fetchPages(),
       fetchMenus(),
       fetchServicesTree(),
       fetchProductCategoriesTree(),
       fetchProductCategories(),
-      fetchProductsPage({ limit: 100, offset: 0 }),
+      fetchProductsPage({ page: 1, pageSize: 20 }),
     ])
       .then(
         ([
@@ -597,40 +452,38 @@ export default function App() {
           categoriesFlatRes,
           productsRes,
         ]) => {
-          if (!mounted) return;
-          setPages(pagesRes || []);
-          setMenus(menusRes || []);
-          const nextServicesTree: Service[] = servicesTreeRes || [];
-          const hasServiceChildren = nextServicesTree.some((s) => s.children?.length);
-          const normalized =
-            nextServicesTree.length && !hasServiceChildren
-              ? buildServiceTreeFromFlat(nextServicesTree)
-              : nextServicesTree;
-          setServicesTree(normalized);
-          setServices(flattenServicesTree(normalized));
-          const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
-          const flatCategories: ProductCategory[] = categoriesFlatRes || [];
-          const hasCategoryChildren = nextCategoriesTree.some((c) => c.children?.length);
-          const normalizedCategoriesTree = nextCategoriesTree.length
-            ? hasCategoryChildren
-              ? nextCategoriesTree
-              : buildCategoryTreeFromFlat(nextCategoriesTree)
-            : buildCategoryTreeFromFlat(flatCategories);
-          setProductCategoriesTree(normalizedCategoriesTree);
-          setProductCategories(
-            normalizedCategoriesTree.length
-              ? flattenCategoryTree(normalizedCategoriesTree)
-              : flatCategories
-          );
-          setProducts(productsRes.items || []);
-          setProductTotal(productsRes.total ?? 0);
-        }
-      )
+        if (!mounted) return;
+        setPages(pagesRes || []);
+        setMenus(menusRes || []);
+        const nextServicesTree: Service[] = servicesTreeRes || [];
+        const hasServiceChildren = nextServicesTree.some((service) => service.children?.length);
+        const normalizedServicesTree =
+          nextServicesTree.length && !hasServiceChildren
+            ? buildServiceTreeFromFlat(nextServicesTree)
+            : nextServicesTree;
+        setServicesTree(normalizedServicesTree);
+        setServices(flattenServicesTree(normalizedServicesTree));
+        setServicesLoading(false);
+        const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
+        const flatCategories: ProductCategory[] = categoriesFlatRes || [];
+        const hasCategoryChildren = nextCategoriesTree.some((category) => category.children?.length);
+        const normalizedCategoriesTree = nextCategoriesTree.length
+          ? hasCategoryChildren
+            ? nextCategoriesTree
+            : buildCategoryTreeFromFlat(nextCategoriesTree)
+          : buildCategoryTreeFromFlat(flatCategories);
+        setProductCategoriesTree(normalizedCategoriesTree);
+        setProductCategories(
+          normalizedCategoriesTree.length
+            ? flattenCategoryTree(normalizedCategoriesTree)
+            : flatCategories
+        );
+        setProductCategoriesLoading(false);
+        setProducts(productsRes.items || []);
+        setProductTotal(productsRes.total || 0);
+      })
       .finally(() => {
-        if (mounted) {
-          setServicesLoading(false);
-          setProductCategoriesLoading(false);
-        }
+        if (mounted) setLoading(false);
       });
     return () => {
       mounted = false;
@@ -652,8 +505,7 @@ export default function App() {
     navigate(target, { replace: true });
   }, [navigate]);
 
-  const contactFormSlug =
-    contactPage?.contact_form_slug || contactPage?.contactFormSlug || contactPage?.slug || "contact";
+  const contactFormSlug = contactPage?.slug || "contact";
 
   useEffect(() => {
     let mounted = true;
@@ -695,6 +547,7 @@ export default function App() {
   const footerMenu = menus.find((m) => m.slug === "footer");
 
   const heroPage = pages.find((p) => p.slug === "home") || pages[0];
+  const aboutPage = pages.find((p) => p.slug === "about");
   const heroImage = useMemo(() => {
     const fromProduct = products.find((product) => getImageUrl(product));
     return fromProduct ? getImageUrl(fromProduct) : "";
@@ -726,6 +579,32 @@ export default function App() {
     };
   }, [search]);
 
+  const serviceGroups = useMemo(() => {
+    return services
+      .filter((service) => !service.parentId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [services]);
+
+  const filteredServices = useMemo(() => {
+    if (selectedServiceGroupId === "all") return services;
+    return services.filter((service) => {
+      return service.id === selectedServiceGroupId || service.parentId === selectedServiceGroupId;
+    });
+  }, [services, selectedServiceGroupId]);
+
+  const pageGroups = useMemo(() => {
+    return pages
+      .filter((page) => !getPageParentId(page))
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [pages]);
+
+  const filteredPages = useMemo(() => {
+    if (selectedPageGroupId === "all") return pages;
+    return pages.filter((page) => {
+      const parentId = getPageParentId(page);
+      return page.id === selectedPageGroupId || parentId === selectedPageGroupId;
+    });
+  }, [pages, selectedPageGroupId]);
 
   const categories = useMemo(() => {
     return [...productCategories].sort((a, b) => {
@@ -737,6 +616,17 @@ export default function App() {
   }, [productCategories]);
 
 
+  useEffect(() => {
+    if (selectedServiceGroupId === "all") return;
+    const exists = serviceGroups.some((service) => service.id === selectedServiceGroupId);
+    if (!exists) setSelectedServiceGroupId("all");
+  }, [serviceGroups, selectedServiceGroupId]);
+
+  useEffect(() => {
+    if (selectedPageGroupId === "all") return;
+    const exists = pageGroups.some((page) => page.id === selectedPageGroupId);
+    if (!exists) setSelectedPageGroupId("all");
+  }, [pageGroups, selectedPageGroupId]);
 
 
   const handleContactFieldChange = (field: ContactFormField, value: string) => {
@@ -963,22 +853,21 @@ export default function App() {
   const renderServiceMenuItems = (nodes: Service[]) => {
     return nodes.map((service) => {
       const children = service.children || [];
-      const slug = service.slug || service.id;
       if (children.length > 0) {
         return (
           <li key={service.id} className="dropdown">
-            <Link to={`/services/${slug}`} onClick={handleMobileLinkClick}>
+            <a href="/#services" onClick={handleMobileLinkClick}>
               {service.name} <span className="caret" aria-hidden="true" />
-            </Link>
+            </a>
             <ul className="dropdown-menu">{renderServiceMenuItems(children)}</ul>
           </li>
         );
       }
       return (
         <li key={service.id}>
-          <Link to={`/services/${slug}`} onClick={handleMobileLinkClick}>
+          <a href="/#services" onClick={handleMobileLinkClick}>
             {service.name}
-          </Link>
+          </a>
         </li>
       );
     });
@@ -1009,7 +898,6 @@ export default function App() {
   const renderServiceMobileDetails = (nodes: Service[]) => {
     return nodes.map((service) => {
       const children = service.children || [];
-      const slug = service.slug || service.id;
       if (children.length > 0) {
         return (
           <details key={service.id}>
@@ -1021,100 +909,12 @@ export default function App() {
         );
       }
       return (
-        <Link key={service.id} to={`/services/${slug}`} onClick={handleMobileLinkClick}>
+        <a key={service.id} href="/#services" onClick={handleMobileLinkClick}>
           {service.name}
-        </Link>
+        </a>
       );
     });
   };
-
-  const renderContactForm = (form: ContactForm) => {
-    const fields = form.fields;
-    const reasonField =
-      findContactField(["reason", "topic", "subject"]) || fields.find((field) => field.type === "select");
-    const firstNameField =
-      findContactField(["first", "firstname", "given"]) ||
-      fields.find((field) => field.name.toLowerCase().includes("name"));
-    const lastNameField = findContactField(["last", "lastname", "surname", "family"]);
-    const emailField = findContactField(["email"]);
-    const phoneField = findContactField(["phone", "tel", "mobile"]);
-    const messageField =
-      findContactField(["message", "notes", "details", "comment"]) ||
-      fields.find((field) => field.type === "textarea");
-
-    const used = new Set(
-      [reasonField, firstNameField, lastNameField, emailField, phoneField, messageField]
-        .filter(Boolean)
-        .map((field) => field!.name)
-    );
-
-    const remaining = fields.filter((field) => !used.has(field.name));
-
-    return (
-      <form className="my-form" onSubmit={handleContactSubmit} onReset={handleContactReset}>
-        <div className="form-container">
-          <h1>{form.name || "Get in touch!"}</h1>
-          <p className="form-subtitle">
-            {form.description || "Tell us what you need and we’ll reply soon."}
-          </p>
-          {contactFormNote && <p className="form-note">{contactFormNote}</p>}
-          <ul>
-            {reasonField ? <li key={reasonField.name}>{renderContactField(reasonField)}</li> : null}
-            {(firstNameField || lastNameField) && (
-              <li className="grid grid-2">
-                <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
-                <div>{lastNameField ? renderContactField(lastNameField) : null}</div>
-              </li>
-            )}
-            {(emailField || phoneField) && (
-              <li className="grid grid-2">
-                <div>{emailField ? renderContactField(emailField) : null}</div>
-                <div>{phoneField ? renderContactField(phoneField) : null}</div>
-              </li>
-            )}
-            {remaining.map((field) => (
-              <li key={field.name}>{renderContactField(field)}</li>
-            ))}
-            {messageField ? <li key={messageField.name}>{renderContactField(messageField)}</li> : null}
-            <li className="btn-row">
-              <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
-                {contactFormSubmitting ? "Sending..." : "Submit"}
-              </button>
-              <button className="btn" type="reset">
-                Reset
-              </button>
-              <span className="required-msg">* Required fields</span>
-            </li>
-          </ul>
-          {contactFormError && <div className="form-error">{contactFormError}</div>}
-          {contactFormSuccess && <div className="form-success">{contactFormSuccess}</div>}
-        </div>
-      </form>
-    );
-  };
-
-  const contactSection = (
-    <section className="section alt">
-      <div className="container">
-        <h2>Contact</h2>
-        <div
-          className="rich"
-          dangerouslySetInnerHTML={{
-            __html: contactPage?.content || "Contact us to book your next production.",
-          }}
-        />
-        <section className="contact-wrap">
-          {contactFormLoading ? (
-            <div className="muted">Loading contact form...</div>
-          ) : !contactForm ? (
-            <div className="muted">Contact form not configured.</div>
-          ) : (
-            renderContactForm(contactForm)
-          )}
-        </section>
-      </div>
-    </section>
-  );
 
   return (
     <div className="site">
@@ -1188,14 +988,14 @@ export default function App() {
               </ul>
             </li>
             <li>
-              <Link to="/pages/about" onClick={handleMobileLinkClick}>
+              <a href="/#about" onClick={handleMobileLinkClick}>
                 About
-              </Link>
+              </a>
             </li>
             <li>
-              <Link to="/contact" onClick={handleMobileLinkClick}>
+              <a href="/#contact" onClick={handleMobileLinkClick}>
                 Contact
-              </Link>
+              </a>
             </li>
             <li className="mnav" aria-hidden="true">
               <details>
@@ -1226,12 +1026,12 @@ export default function App() {
                         : renderServiceMobileDetails(services)}
                     </div>
                   </details>
-                  <Link to="/pages/about" onClick={handleMobileLinkClick}>
+                  <a href="/#about" onClick={handleMobileLinkClick}>
                     About
-                  </Link>
-                  <Link to="/contact" onClick={handleMobileLinkClick}>
+                  </a>
+                  <a href="/#contact" onClick={handleMobileLinkClick}>
                     Contact
-                  </Link>
+                  </a>
                 </div>
               </details>
             </li>
@@ -1314,12 +1114,12 @@ export default function App() {
                 dangerouslySetInnerHTML={{ __html: heroPage?.content || "Modern prop rentals for every production." }}
               />
               <div className="hero-actions">
-                <Link className="btn primary" to="/products">
+                <a className="btn primary" href="#products">
                   Explore Catalog
-                </Link>
-                <Link className="btn" to="/services">
+                </a>
+                <a className="btn" href="#services">
                   View Services
-                </Link>
+                </a>
               </div>
               <div className="hero-metrics">
                 <div>
@@ -1353,25 +1153,200 @@ export default function App() {
           </div>
         </section>
 
+        <section className="section" id="services">
+          <div className="container">
+            <div className="section-header">
+              <h2>Services</h2>
+              {serviceGroups.length > 0 && (
+                <div className="filter">
+                  <label htmlFor="serviceFilter">Group</label>
+                  <select
+                    id="serviceFilter"
+                    value={selectedServiceGroupId}
+                    onChange={(e) => setSelectedServiceGroupId(e.target.value)}
+                  >
+                    <option value="all">All services</option>
+                    {serviceGroups.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            {loading ? (
+              <div className="muted">Loading services...</div>
+            ) : services.length === 0 ? (
+              <div className="muted">No services found yet.</div>
+            ) : filteredServices.length === 0 ? (
+              <div className="muted">No services found in this group.</div>
+            ) : (
+              <div className="grid">
+                {filteredServices.map((service) => (
+                  <div key={service.id} className="card">
+                    <h3>{service.name}</h3>
+                    <p>{service.description || "Custom service tailored for your project."}</p>
+                    <div className="meta">
+                      {service.durationMinutes ? `${service.durationMinutes} min` : "Custom duration"}
+                      {service.basePriceCents ? ` • $${dollarsFromCents(service.basePriceCents)}` : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
 
+        <section className="section" id="pages">
+          <div className="container">
+            <div className="section-header">
+              <h2>Pages</h2>
+              {pageGroups.length > 0 && (
+                <div className="filter">
+                  <label htmlFor="pageFilter">Group</label>
+                  <select
+                    id="pageFilter"
+                    value={selectedPageGroupId}
+                    onChange={(e) => setSelectedPageGroupId(e.target.value)}
+                  >
+                    <option value="all">All pages</option>
+                    {pageGroups.map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.title || page.slug}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            {loading ? (
+              <div className="muted">Loading pages...</div>
+            ) : pages.length === 0 ? (
+              <div className="muted">No pages found yet.</div>
+            ) : filteredPages.length === 0 ? (
+              <div className="muted">No pages found in this group.</div>
+            ) : (
+              <div className="grid">
+                {filteredPages.map((page) => (
+                  <div key={page.id} className="card">
+                    <h3>{page.title || page.slug}</h3>
+                    <p>{stripHtml(page.content || "").slice(0, 140) || "No content available yet."}</p>
+                    {page.full_path && <div className="meta">{page.full_path}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="section" id="about">
+          <div className="container">
+            <h2>About</h2>
+            <div
+              className="rich"
+              dangerouslySetInnerHTML={{ __html: aboutPage?.content || "Tell your story here." }}
+            />
+          </div>
+        </section>
+
+        <section className="section alt" id="contact">
+          <div className="container">
+            <h2>Contact</h2>
+            <div
+              className="rich"
+              dangerouslySetInnerHTML={{ __html: contactPage?.content || "Contact us to book your next production." }}
+            />
+            <section className="contact-wrap">
+              {contactFormLoading ? (
+                <div className="muted">Loading contact form...</div>
+              ) : !contactForm ? (
+                <div className="muted">Contact form not configured.</div>
+              ) : (
+                <form className="my-form" onSubmit={handleContactSubmit} onReset={handleContactReset}>
+                  <div className="form-container">
+                    <h1>{contactForm.name || "Get in touch!"}</h1>
+                    <p className="form-subtitle">
+                      {contactForm.description || "Tell us what you need and we’ll reply soon."}
+                    </p>
+                    {contactFormNote && <p className="form-note">{contactFormNote}</p>}
+                    <ul>
+                      {(() => {
+                        const fields = contactForm.fields;
+                        const reasonField =
+                          findContactField(["reason", "topic", "subject"]) ||
+                          fields.find((field) => field.type === "select");
+                        const firstNameField =
+                          findContactField(["first", "firstname", "given"]) ||
+                          fields.find((field) => field.name.toLowerCase().includes("name"));
+                        const lastNameField = findContactField(["last", "lastname", "surname", "family"]);
+                        const emailField = findContactField(["email"]);
+                        const phoneField = findContactField(["phone", "tel", "mobile"]);
+                        const messageField =
+                          findContactField(["message", "notes", "details", "comment"]) ||
+                          fields.find((field) => field.type === "textarea");
+
+                        const used = new Set(
+                          [
+                            reasonField,
+                            firstNameField,
+                            lastNameField,
+                            emailField,
+                            phoneField,
+                            messageField,
+                          ]
+                            .filter(Boolean)
+                            .map((field) => field!.name)
+                        );
+
+                        const remaining = fields.filter((field) => !used.has(field.name));
+
+                        return (
+                          <>
+                            {reasonField && <li key={reasonField.name}>{renderContactField(reasonField)}</li>}
+                            {(firstNameField || lastNameField) && (
+                              <li className="grid grid-2">
+                                <div>{firstNameField ? renderContactField(firstNameField) : null}</div>
+                                <div>{lastNameField ? renderContactField(lastNameField) : null}</div>
+                              </li>
+                            )}
+                            {(emailField || phoneField) && (
+                              <li className="grid grid-2">
+                                <div>{emailField ? renderContactField(emailField) : null}</div>
+                                <div>{phoneField ? renderContactField(phoneField) : null}</div>
+                              </li>
+                            )}
+                            {messageField && <li key={messageField.name}>{renderContactField(messageField)}</li>}
+                            {remaining.map((field) => (
+                              <li key={field.name}>{renderContactField(field)}</li>
+                            ))}
+                          </>
+                        );
+                      })()}
+                      <li className="btn-row">
+                        <button className="btn btn-primary" type="submit" disabled={contactFormSubmitting}>
+                          {contactFormSubmitting ? "Sending..." : "Submit"}
+                        </button>
+                        <button className="btn" type="reset">
+                          Reset
+                        </button>
+                        <span className="required-msg">* Required fields</span>
+                      </li>
+                    </ul>
+                    {contactFormError && <div className="form-error">{contactFormError}</div>}
+                    {contactFormSuccess && <div className="form-success">{contactFormSuccess}</div>}
+                  </div>
+                </form>
+              )}
+            </section>
+          </div>
+        </section>
               </>
             }
           />
-          <Route
-            path="/products"
-            element={
-              <ProductsIndexPage
-                categories={categories}
-                loading={productCategoriesLoading}
-              />
-            }
-          />
+          <Route path="/products" element={<ProductsIndexPage categories={categories} />} />
           <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
           <Route path="/products/:categorySlug/:productSlug" element={<ProductDetail categories={categories} />} />
-          <Route path="/services" element={<ServicesIndex services={services} loading={servicesLoading} />} />
-          <Route path="/services/:serviceSlug" element={<ServiceDetail services={services} loading={servicesLoading} />} />
-          <Route path="/contact" element={contactSection} />
-          <Route path="/pages/:slug" element={<PageDetail pages={pages} />} />
           <Route path="/admin" element={<AdminRedirect />} />
         </Routes>
       </main>
@@ -1384,7 +1359,7 @@ export default function App() {
               <ul>
                 {(footerMenu?.items || headerMenu?.items || []).slice(0, 4).map((item) => {
                   const label = item.label || item.page?.title || "Link";
-                  const href = item.external_url || (item.page?.slug ? `/pages/${item.page.slug}` : "#");
+                  const href = item.external_url || `#${item.page?.slug || "section"}`;
                   return (
                     <li key={item.id}>
                       <a href={href}>{label}</a>
@@ -1398,7 +1373,7 @@ export default function App() {
               <ul>
                 {(footerMenu?.items || headerMenu?.items || []).slice(4, 8).map((item) => {
                   const label = item.label || item.page?.title || "Link";
-                  const href = item.external_url || (item.page?.slug ? `/pages/${item.page.slug}` : "#");
+                  const href = item.external_url || `#${item.page?.slug || "section"}`;
                   return (
                     <li key={item.id}>
                       <a href={href}>{label}</a>
@@ -1412,7 +1387,7 @@ export default function App() {
               <ul>
                 {services.slice(0, 4).map((service) => (
                   <li key={service.id}>
-                    <a href={`/services/${service.slug || service.id}`}>{service.name}</a>
+                    <a href="/#services">{service.name}</a>
                   </li>
                 ))}
               </ul>
