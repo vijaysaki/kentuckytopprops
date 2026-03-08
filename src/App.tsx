@@ -575,29 +575,15 @@ export default function App() {
   const [contactFormSuccess, setContactFormSuccess] = useState<string | null>(null);
   const contactPage = pages.find((p) => p.slug === "contact");
 
-  // Core layout: pages and menus only (needed for header, footer, routes)
+  // Core layout: pages, menus, and services (needed for header nav dropdown)
   useEffect(() => {
     let mounted = true;
-    Promise.all([fetchPages(), fetchMenus()])
-      .then(([pagesRes, menusRes]) => {
+    setServicesLoading(true);
+    Promise.all([fetchPages(), fetchMenus(), fetchServicesTree()])
+      .then(([pagesRes, menusRes, servicesTreeRes]) => {
         if (!mounted) return;
         setPages(pagesRes || []);
         setMenus(menusRes || []);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Lazy: fetch services only when visiting /services or opening services menu
-  const needServices = pathname.startsWith("/services") || servicesMenuOpen;
-  useEffect(() => {
-    if (!needServices) return;
-    let mounted = true;
-    setServicesLoading(true);
-    fetchServicesTree()
-      .then((servicesTreeRes) => {
-        if (!mounted) return;
         const nextServicesTree: Service[] = servicesTreeRes || [];
         const hasServiceChildren = nextServicesTree.some((s) => s.children?.length);
         const normalized =
@@ -613,7 +599,7 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [needServices]);
+  }, []);
 
   // Lazy: fetch product categories only when visiting /products or opening products menu
   const needCategories = pathname.startsWith("/products") || productsMenuOpen;
