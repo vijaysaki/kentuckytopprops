@@ -77,26 +77,21 @@ type ProductsPage = {
   total: number;
   page: number;
   pageSize: number;
-  error?: boolean;
 };
 
 export async function fetchProductsPage(params: {
   page?: number;
   pageSize?: number;
-  limit?: number;
-  offset?: number;
   categoryId?: string;
   categorySlug?: string;
   query?: string;
   slug?: string;
 }): Promise<ProductsPage> {
   const page = params.page ?? 1;
-  const pageSize = params.pageSize ?? params.limit ?? 20;
-  const limit = params.limit ?? pageSize;
-  const offset = params.offset ?? (page - 1) * pageSize;
+  const pageSize = params.pageSize ?? 20;
   const searchParams = new URLSearchParams();
-  searchParams.set("limit", String(limit));
-  searchParams.set("offset", String(offset));
+  searchParams.set("page", String(page));
+  searchParams.set("pageSize", String(pageSize));
   if (params.categoryId && params.categoryId !== "all") {
     searchParams.set("categoryId", params.categoryId);
   }
@@ -129,7 +124,7 @@ export async function fetchProductsPage(params: {
       pageSize: response.pageSize ?? response.limit ?? pageSize,
     };
   } catch {
-    return { items: [], total: 0, page, pageSize, error: true };
+    return { items: [], total: 0, page, pageSize };
   }
 }
 
