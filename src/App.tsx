@@ -223,7 +223,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
 function ProductsCategoryPage({ categories }: { categories: ProductCategory[] }) {
   const { categorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
   const pageParam = Number(searchParams.get("page") || "1");
   const requestedPage = Number.isFinite(pageParam) ? pageParam : 1;
   const [items, setItems] = useState<Product[]>([]);
@@ -310,6 +310,19 @@ function ProductsCategoryPage({ categories }: { categories: ProductCategory[] })
           <h2>{categoryName}</h2>
           <div className="muted">
             {total} item{total === 1 ? "" : "s"}
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <label htmlFor="pageSizeSelect">Products per page: </label>
+            <select
+              id="pageSizeSelect"
+              value={pageSize}
+              onChange={e => setPageSize(Number(e.target.value))}
+              style={{ marginLeft: 8 }}
+            >
+              {[10, 20, 50, 100].map(size => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
           </div>
         </div>
         {loading ? (
