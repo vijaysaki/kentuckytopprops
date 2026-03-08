@@ -575,12 +575,19 @@ export default function App() {
   const [contactFormSuccess, setContactFormSuccess] = useState<string | null>(null);
   const contactPage = pages.find((p) => p.slug === "contact");
 
-  // Core layout: pages, menus, and services (needed for header nav dropdown)
+  // Core layout: pages, menus, services, and product categories (needed for header nav dropdowns)
   useEffect(() => {
     let mounted = true;
     setServicesLoading(true);
-    Promise.all([fetchPages(), fetchMenus(), fetchServicesTree()])
-      .then(([pagesRes, menusRes, servicesTreeRes]) => {
+    setProductCategoriesLoading(true);
+    Promise.all([
+      fetchPages(),
+      fetchMenus(),
+      fetchServicesTree(),
+      fetchProductCategoriesTree(),
+      fetchProductCategories(),
+    ])
+      .then(([pagesRes, menusRes, servicesTreeRes, categoriesTreeRes, categoriesFlatRes]) => {
         if (!mounted) return;
         setPages(pagesRes || []);
         setMenus(menusRes || []);
@@ -592,24 +599,6 @@ export default function App() {
             : nextServicesTree;
         setServicesTree(normalized);
         setServices(flattenServicesTree(normalized));
-      })
-      .finally(() => {
-        if (mounted) setServicesLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Lazy: fetch product categories only when visiting /products or opening products menu
-  const needCategories = pathname.startsWith("/products") || productsMenuOpen;
-  useEffect(() => {
-    if (!needCategories) return;
-    let mounted = true;
-    setProductCategoriesLoading(true);
-    Promise.all([fetchProductCategoriesTree(), fetchProductCategories()])
-      .then(([categoriesTreeRes, categoriesFlatRes]) => {
-        if (!mounted) return;
         const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
         const flatCategories: ProductCategory[] = categoriesFlatRes || [];
         const hasCategoryChildren = nextCategoriesTree.some((c) => c.children?.length);
@@ -626,12 +615,15 @@ export default function App() {
         );
       })
       .finally(() => {
-        if (mounted) setProductCategoriesLoading(false);
+        if (mounted) {
+          setServicesLoading(false);
+          setProductCategoriesLoading(false);
+        }
       });
     return () => {
       mounted = false;
     };
-  }, [needCategories]);
+  }, []);
 
   // Lazy: fetch hero products only when on home page
   const isHome = pathname === "/" || pathname === "";
