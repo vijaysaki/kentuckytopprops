@@ -440,37 +440,43 @@ export default function App() {
       fetchMenus(),
       fetchServicesTree(),
       fetchProductCategoriesTree(),
-      fetchProductCategories(),
-      fetchProductsPage({ page: 1, pageSize: 20 }),
-    ])
-      .then(
-        ([
-          pagesRes,
-          menusRes,
-          servicesTreeRes,
-          categoriesTreeRes,
-          categoriesFlatRes,
-          productsRes,
-        ]) => {
-        if (!mounted) return;
-        setPages(pagesRes || []);
-        setMenus(menusRes || []);
-        const nextServicesTree: Service[] = servicesTreeRes || [];
-        const hasServiceChildren = nextServicesTree.some((service) => service.children?.length);
-        const normalizedServicesTree =
-          nextServicesTree.length && !hasServiceChildren
-            ? buildServiceTreeFromFlat(nextServicesTree)
-            : nextServicesTree;
-        setServicesTree(normalizedServicesTree);
-        setServices(flattenServicesTree(normalizedServicesTree));
-        setServicesLoading(false);
-        const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
-        const flatCategories: ProductCategory[] = categoriesFlatRes || [];
-        const hasCategoryChildren = nextCategoriesTree.some((category) => category.children?.length);
-        const normalizedCategoriesTree = nextCategoriesTree.length
-          ? hasCategoryChildren
-            ? nextCategoriesTree
-            : buildCategoryTreeFromFlat(nextCategoriesTree)
+      fetchProductsPage({
+        page: requestedPage,
+        pageSize,
+        categoryId: categoryId || undefined,
+        categorySlug: categorySlugValue || undefined,
+      })
+        .then((data) => {
+          if (!mounted) return;
+          const incoming = data.items || [];
+          if (categoryId || categorySlugValue) {
+            const filtered = incoming.filter((product) => {
+              const direct = product.category;
+              if (direct) {
+                if (categoryId && direct.id === categoryId) return true;
+                if (categorySlugValue && direct.slug === categorySlugValue) return true;
+              }
+              return (product.categoryLinks || []).some((link) => {
+                const cat = link.category;
+                if (!cat) return false;
+                if (categoryId && cat.id === categoryId) return true;
+                if (categorySlugValue && cat.slug === categorySlugValue) return true;
+                return false;
+              });
+            });
+            // If no products match the filter, show all products for this page
+            if (filtered.length === 0) {
+              setItems(incoming);
+              setTotal(incoming.length);
+            } else {
+              setItems(filtered);
+              setTotal(filtered.length);
+            }
+          } else {
+            setItems(incoming);
+            setTotal(data.total || incoming.length);
+          }
+        })
           : buildCategoryTreeFromFlat(flatCategories);
         setProductCategoriesTree(normalizedCategoriesTree);
         setProductCategories(
