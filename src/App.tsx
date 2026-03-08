@@ -575,7 +575,7 @@ export default function App() {
   const [contactFormSuccess, setContactFormSuccess] = useState<string | null>(null);
   const contactPage = pages.find((p) => p.slug === "contact");
 
-  // Core layout: pages, menus, services, and product categories (needed for header nav dropdowns)
+  // Load everything on init (simple approach - like before)
   useEffect(() => {
     let mounted = true;
     setServicesLoading(true);
@@ -586,34 +586,46 @@ export default function App() {
       fetchServicesTree(),
       fetchProductCategoriesTree(),
       fetchProductCategories(),
+      fetchProductsPage({ limit: 100, offset: 0 }),
     ])
-      .then(([pagesRes, menusRes, servicesTreeRes, categoriesTreeRes, categoriesFlatRes]) => {
-        if (!mounted) return;
-        setPages(pagesRes || []);
-        setMenus(menusRes || []);
-        const nextServicesTree: Service[] = servicesTreeRes || [];
-        const hasServiceChildren = nextServicesTree.some((s) => s.children?.length);
-        const normalized =
-          nextServicesTree.length && !hasServiceChildren
-            ? buildServiceTreeFromFlat(nextServicesTree)
-            : nextServicesTree;
-        setServicesTree(normalized);
-        setServices(flattenServicesTree(normalized));
-        const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
-        const flatCategories: ProductCategory[] = categoriesFlatRes || [];
-        const hasCategoryChildren = nextCategoriesTree.some((c) => c.children?.length);
-        const normalizedCategoriesTree = nextCategoriesTree.length
-          ? hasCategoryChildren
-            ? nextCategoriesTree
-            : buildCategoryTreeFromFlat(nextCategoriesTree)
-          : buildCategoryTreeFromFlat(flatCategories);
-        setProductCategoriesTree(normalizedCategoriesTree);
-        setProductCategories(
-          normalizedCategoriesTree.length
-            ? flattenCategoryTree(normalizedCategoriesTree)
-            : flatCategories
-        );
-      })
+      .then(
+        ([
+          pagesRes,
+          menusRes,
+          servicesTreeRes,
+          categoriesTreeRes,
+          categoriesFlatRes,
+          productsRes,
+        ]) => {
+          if (!mounted) return;
+          setPages(pagesRes || []);
+          setMenus(menusRes || []);
+          const nextServicesTree: Service[] = servicesTreeRes || [];
+          const hasServiceChildren = nextServicesTree.some((s) => s.children?.length);
+          const normalized =
+            nextServicesTree.length && !hasServiceChildren
+              ? buildServiceTreeFromFlat(nextServicesTree)
+              : nextServicesTree;
+          setServicesTree(normalized);
+          setServices(flattenServicesTree(normalized));
+          const nextCategoriesTree: ProductCategory[] = categoriesTreeRes || [];
+          const flatCategories: ProductCategory[] = categoriesFlatRes || [];
+          const hasCategoryChildren = nextCategoriesTree.some((c) => c.children?.length);
+          const normalizedCategoriesTree = nextCategoriesTree.length
+            ? hasCategoryChildren
+              ? nextCategoriesTree
+              : buildCategoryTreeFromFlat(nextCategoriesTree)
+            : buildCategoryTreeFromFlat(flatCategories);
+          setProductCategoriesTree(normalizedCategoriesTree);
+          setProductCategories(
+            normalizedCategoriesTree.length
+              ? flattenCategoryTree(normalizedCategoriesTree)
+              : flatCategories
+          );
+          setProducts(productsRes.items || []);
+          setProductTotal(productsRes.total ?? 0);
+        }
+      )
       .finally(() => {
         if (mounted) {
           setServicesLoading(false);
@@ -624,21 +636,6 @@ export default function App() {
       mounted = false;
     };
   }, []);
-
-  // Lazy: fetch hero products only when on home page
-  const isHome = pathname === "/" || pathname === "";
-  useEffect(() => {
-    if (!isHome) return;
-    let mounted = true;
-    fetchProductsPage({ limit: 4, offset: 0 }).then((productsRes) => {
-      if (!mounted) return;
-      setProducts(productsRes.items || []);
-      setProductTotal(productsRes.total || 0);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [isHome]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
