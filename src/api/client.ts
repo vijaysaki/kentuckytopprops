@@ -1,10 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.toString() || "";
 const TENANT_ID = import.meta.env.VITE_TENANT_ID?.toString() || "";
+const TENANT_DOMAIN = import.meta.env.VITE_TENANT_DOMAIN?.toString() || "";
 
 export function withTenant(path: string): string {
-  if (!TENANT_ID) return path;
+  const params = new URLSearchParams();
+  if (TENANT_ID) params.set("tenantId", TENANT_ID);
+  else if (TENANT_DOMAIN) params.set("domain", TENANT_DOMAIN);
+  if (params.toString() === "") return path;
   const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}tenantId=${encodeURIComponent(TENANT_ID)}`;
+  return `${path}${separator}${params.toString()}`;
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
