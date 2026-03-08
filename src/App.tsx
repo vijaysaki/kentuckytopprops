@@ -70,27 +70,6 @@ function ProductsCategoryPage(_: { categories: ProductCategory[] }) {
   );
 }
 
-function DropdownMenu() {
-  const [open, setOpen] = useState(false);
-  return (
-    <nav className="navbar">
-      <div className="dropdown">
-        <button className="dropdown-toggle" onClick={() => setOpen(!open)}>
-          Menu ▼
-        </button>
-        {open && (
-          <ul className="dropdown-menu">
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/products/cat-one">Category One</Link></li>
-            <li><Link to="/products/cat-two">Category Two</Link></li>
-            {/* Add more menu items as needed */}
-          </ul>
-        )}
-      </div>
-    </nav>
-  );
-}
-
 function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   return (
