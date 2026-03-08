@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kentucky Top Props - Navbar Prototype</title>
+    <title>Kentucky Top Props</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
@@ -14,8 +14,8 @@
     <nav class="bg-white border-b border-slate-200">
       <div class="max-w-screen-xl mx-auto p-4">
         <div class="flex items-center justify-between gap-4">
-          <a href="#" class="text-xl font-semibold text-slate-800 whitespace-nowrap">
-            KentuckyTopProps
+          <a href="/" class="text-xl font-semibold text-slate-800 whitespace-nowrap">
+            Kentucky Top Props
           </a>
 
           <div class="hidden md:block flex-1 max-w-md">
@@ -276,12 +276,22 @@
         return response.json();
       }
 
-      async function fetchProductsForCategory(category) {
+      async function fetchProductBySlug(slug) {
+        const params = getTenantQueryParams();
+        const response = await fetch(`${API_BASE_URL}/public/products/by-slug/${encodeURIComponent(slug)}?${params.toString()}`);
+        if (!response.ok) throw new Error(`Product not found: ${response.status}`);
+        return response.json();
+      }
+
+      const PRODUCTS_PAGE_SIZE = 24;
+
+      async function fetchProductsForCategory(category, offset = 0) {
         const slug = category?.slug || "";
         const id = category?.id || "";
+        const limit = PRODUCTS_PAGE_SIZE;
         const attempts = [
-          { categorySlug: slug, limit: 24, offset: 0 },
-          { categoryId: id, limit: 24, offset: 0 }
+          { categorySlug: slug, limit, offset },
+          { categoryId: id, limit, offset }
         ];
 
         let lastError = null;
@@ -294,7 +304,8 @@
               : Array.isArray(payload)
                 ? payload
                 : [];
-            return { items, payload };
+            const total = payload?.total ?? items.length;
+            return { items, total, limit, offset };
           } catch (error) {
             lastError = error;
           }
@@ -306,7 +317,7 @@
             const payload = await fetchPublicProductsList({ limit: 100, offset: 0 });
             const all = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
             const items = all.filter((p) => p.categoryId === id || (p.category?.id === id) || (p.categoryLinks || []).some((l) => l.categoryId === id));
-            return { items, payload: { items } };
+            return { items, total: items.length, limit: items.length, offset: 0 };
           } catch (e) {
             lastError = e;
           }
@@ -360,6 +371,41 @@
             `;
           })
           .join("");
+      }
+
+      function bindProductsLoadMore() {
+        const btn = document.querySelector("[data-products-load-more]");
+        if (!btn) return;
+        btn.addEventListener("click", async function () {
+          const slug = this.getAttribute("data-category-slug") || "";
+          const id = this.getAttribute("data-category-id") || "";
+          const nextOffset = parseInt(this.getAttribute("data-next-offset") || "0", 10);
+          const total = parseInt(this.getAttribute("data-total") || "0", 10);
+          const gridEl = document.getElementById("products-grid");
+          const countEl = document.getElementById("products-count");
+          const wrapEl = document.getElementById("products-load-more-wrap");
+          if (!gridEl || !countEl) return;
+
+          this.disabled = true;
+          this.textContent = "Loading…";
+          try {
+            const { items } = await fetchProductsForCategory({ slug, id }, nextOffset);
+            items.forEach((p) => {
+              gridEl.insertAdjacentHTML("beforeend", renderProductCard(p));
+            });
+            const newCount = gridEl.querySelectorAll("article").length;
+            countEl.textContent = `Showing ${newCount} of ${total} products`;
+            this.setAttribute("data-next-offset", String(nextOffset + items.length));
+            if (newCount >= total && wrapEl) wrapEl.remove();
+            else {
+              this.disabled = false;
+              this.textContent = "Load more";
+            }
+          } catch {
+            this.disabled = false;
+            this.textContent = "Load more";
+          }
+        });
       }
 
       function bindSubmenuToggles() {
@@ -496,8 +542,11 @@
             .toLowerCase();
 
           const page = pages.find((item) => {
-            const fullPath = String(item?.full_path || "").replace(/^\/+/, "").toLowerCase();
+            const fullPath = String(item?.full_path || item?.fullPath || "").replace(/^\/+/, "").toLowerCase();
             const slug = String(item?.slug || "").replace(/^\/+/, "").toLowerCase();
+            if (normalized === "home" || normalized === "") {
+              return fullPath === "" || fullPath === "home" || slug === "home" || slug === "";
+            }
             return fullPath === normalized || slug === normalized;
           });
           return page || null;
@@ -512,8 +561,13 @@
         const bodyEl = document.getElementById("content-body");
         if (!titleEl || !bodyEl || !page) return;
 
-        titleEl.textContent = page.title || "Page";
-        bodyEl.innerHTML = page.content || "<p>No content available for this page.</p>";
+        const title = page.title || page.name || "Page";
+        const content = page.content || page.body || "";
+
+        titleEl.textContent = title;
+        bodyEl.innerHTML = content.trim()
+          ? content
+          : "<p class=\"text-slate-600\">No content available for this page.</p>";
       }
 
       function renderContactForm(form) {
@@ -787,27 +841,97 @@
         return words.length > maxWords ? words.slice(0, maxWords).join(" ") + "…" : text;
       }
 
-      function renderProductItemsGrid(products) {
-        if (!Array.isArray(products) || !products.length) {
-          return `<p class="text-slate-600 mt-4">No products found in this category.</p>`;
-        }
+      function renderProductDetail(product) {
+        const fullHtml = product.descriptionHtml || "";
+        const imgs = (product.images || [])
+          .filter((pi) => pi && pi.image)
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+          .map((pi) => pi.image.mediumUrl || pi.image.largeUrl || pi.image.spacesUrl || pi.image.thumbnailUrl)
+          .filter(Boolean);
+        const mainImg = product.previewImageUrl || product.previewThumbnailUrl || imgs[0];
+        const allImgs = mainImg && !imgs.includes(mainImg) ? [mainImg, ...imgs] : imgs.length ? imgs : mainImg ? [mainImg] : [];
+        const alts = (product.images || []).filter((pi) => pi && pi.image).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)).map((pi) => (pi.altText || pi.image?.altText || product.name || "").replace(/"/g, "&quot;"));
+        const alt = (product.previewAltText || product.name || "").replace(/"/g, "&quot;");
+
+        const colCount = 4;
+        const cols = Array.from({ length: colCount }, () => []);
+        allImgs.forEach((url, i) => cols[i % colCount].push({ url, alt: alts[i] || alt }));
+
+        const masonryGallery = allImgs.length
+          ? `
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4" id="product-gallery">
+              ${cols.map((colImgs) => `
+                <div class="grid gap-4">
+                  ${colImgs.map((item) => `
+                    <button type="button" class="product-gallery-img block w-full rounded-lg overflow-hidden bg-slate-100 text-left cursor-pointer hover:opacity-90 transition-opacity" data-src="${item.url.replace(/"/g, "&quot;")}">
+                      <img src="${item.url}" alt="${item.alt}" class="h-auto w-full max-w-full object-cover object-center" loading="lazy" />
+                    </button>
+                  `).join("")}
+                </div>
+              `).join("")}
+            </div>
+            <div id="product-gallery-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 cursor-pointer hidden" tabindex="-1" data-gallery-backdrop>
+              <button type="button" class="product-gallery-close absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 cursor-pointer" aria-label="Close">✕</button>
+              <div class="cursor-default" onclick="event.stopPropagation()"><img id="product-gallery-modal-img" src="" alt="" class="max-h-[90vh] max-w-full rounded-lg object-contain" /></div>
+            </div>
+          `
+          : "";
 
         return `
-          <section class="mt-6">
-            <h3 class="text-lg font-semibold text-slate-800">Products</h3>
-            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              ${products
-                .map((product) => {
-                  const description = getProductDescription(product, 25);
-                  return `
-                    <article class="border border-slate-200 rounded-lg p-4 bg-white">
-                      <h4 class="text-base font-semibold text-slate-800">${product.name || "Untitled Product"}</h4>
-                      ${description ? `<p class="mt-1 text-sm text-slate-600">${description}</p>` : ""}
-                    </article>
-                  `;
-                })
-                .join("")}
+          <p class="mb-4"><a href="/products" class="text-blue-600 hover:underline">← Back to Products</a></p>
+          <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <div class="order-2 lg:order-1">${masonryGallery}</div>
+            <div class="order-1 lg:order-2">
+              <h2 class="text-2xl font-bold text-slate-800">${product.name || "Untitled Product"}</h2>
+              ${product.shortDescription ? `<p class="mt-3 text-slate-600">${product.shortDescription}</p>` : ""}
+              ${fullHtml ? `<div class="mt-6 prose prose-slate max-w-none">${fullHtml}</div>` : ""}
             </div>
+          </div>
+        `;
+      }
+
+      function renderProductCard(product) {
+        const description = getProductDescription(product, 25);
+        const imgUrl = product.previewThumbnailUrl || product.previewImageUrl ||
+          (product.images && product.images[0] && (product.images[0].image?.thumbnailUrl || product.images[0].image?.mediumUrl || product.images[0].image?.spacesUrl));
+        const productUrl = product.slug ? `/products/p/${product.slug}` : null;
+        const cardContent = `
+          ${imgUrl ? `<div class="aspect-square overflow-hidden rounded-t-lg bg-slate-100"><img src="${imgUrl}" alt="${(product.previewAltText || product.name || "").replace(/"/g, "&quot;")}" class="w-full h-full object-cover" loading="lazy" /></div>` : ""}
+          <div class="p-4">
+            <h4 class="text-base font-semibold text-slate-800">${product.name || "Untitled Product"}</h4>
+            ${description ? `<p class="mt-1 text-sm text-slate-600">${description}</p>` : ""}
+          </div>
+        `;
+        return `<article class="border border-slate-200 rounded-lg bg-white overflow-hidden">${productUrl ? `<a href="${productUrl}" class="block">${cardContent}</a>` : cardContent}</article>`;
+      }
+
+      function renderProductItemsGrid(products, total, category, nextOffset) {
+        if (!Array.isArray(products)) products = [];
+        const hasMore = total > products.length;
+        const countText = total > 0 ? `Showing ${products.length} of ${total} products` : "No products found in this category.";
+
+        return `
+          <section class="mt-6" id="products-section">
+            <h3 class="text-lg font-semibold text-slate-800">Products</h3>
+            <p class="mt-1 text-sm text-slate-600" id="products-count">${countText}</p>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="products-grid">
+              ${products.map((p) => renderProductCard(p)).join("")}
+            </div>
+            ${hasMore ? `
+              <div class="mt-4" id="products-load-more-wrap">
+                <button
+                  type="button"
+                  data-products-load-more
+                  data-category-slug="${(category?.slug || "").replace(/"/g, "&quot;")}"
+                  data-category-id="${(category?.id || "").replace(/"/g, "&quot;")}"
+                  data-next-offset="${nextOffset}"
+                  data-total="${total}"
+                  class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                >
+                  Load more
+                </button>
+              </div>
+            ` : ""}
           </section>
         `;
       }
@@ -819,6 +943,21 @@
         if (!titleEl || !bodyEl) return;
 
         titleEl.textContent = "Products";
+
+        // Product detail: /products/p/product-slug
+        if (segments[0] === "p" && segments[1]) {
+          const productSlug = segments[1];
+          try {
+            const product = await fetchProductBySlug(productSlug);
+            titleEl.textContent = product.name || "Product";
+            bodyEl.innerHTML = renderProductDetail(product);
+          } catch {
+            titleEl.textContent = "Product not found";
+            bodyEl.innerHTML = `<p class="text-slate-600 mt-4">This product could not be found.</p>`;
+          }
+          return;
+        }
+
         if (!segments.length) {
           bodyEl.innerHTML = renderCollectionCards("Products", productsCatalogCache, "/products");
           return;
@@ -836,13 +975,15 @@
         titleEl.textContent = matched.name || "Products";
         let productsMarkup = "";
         try {
-          const { items: productItems } = await fetchProductsForCategory(matched);
-          productsMarkup = renderProductItemsGrid(productItems);
+          const { items: productItems, total } = await fetchProductsForCategory(matched);
+          const nextOffset = productItems.length;
+          productsMarkup = renderProductItemsGrid(productItems, total, matched, nextOffset);
         } catch (error) {
           productsMarkup = `<p class="text-slate-500 mt-4">Unable to load products for this category right now.</p>`;
         }
 
         bodyEl.innerHTML = `${renderItemDetail(matched, "/products", "Subcategories")}${productsMarkup}`;
+        bindProductsLoadMore();
       }
 
       async function hydrateServicesRoute(segments) {
@@ -913,6 +1054,29 @@
         document.addEventListener("click", async (event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;
+          const galleryImg = target.closest(".product-gallery-img");
+          if (galleryImg) {
+            const src = galleryImg.getAttribute("data-src");
+            const modal = document.getElementById("product-gallery-modal");
+            const modalImg = document.getElementById("product-gallery-modal-img");
+            if (src && modal && modalImg) {
+              modalImg.src = src;
+              modalImg.alt = galleryImg.querySelector("img")?.alt || "";
+              modal.classList.remove("hidden");
+              document.body.style.overflow = "hidden";
+            }
+            return;
+          }
+          const galleryClose = target.closest(".product-gallery-close");
+          const galleryBackdrop = target.closest("[data-gallery-backdrop]");
+          if (galleryClose || (galleryBackdrop && target === galleryBackdrop)) {
+            const modal = document.getElementById("product-gallery-modal");
+            if (modal) {
+              modal.classList.add("hidden");
+              document.body.style.overflow = "";
+            }
+            return;
+          }
           const link = target.closest("a");
           if (!link) return;
 
@@ -928,6 +1092,16 @@
 
         window.addEventListener("popstate", async () => {
           await hydratePageFromPathname(window.location.pathname);
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            const modal = document.getElementById("product-gallery-modal");
+            if (modal && !modal.classList.contains("hidden")) {
+              modal.classList.add("hidden");
+              document.body.style.overflow = "";
+            }
+          }
         });
       }
 
