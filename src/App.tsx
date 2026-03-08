@@ -126,38 +126,7 @@ function ProductDetail({ categories }: { categories: ProductCategory[] }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [productLoading, setProductLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    if (!productSlug) {
-      setProductLoading(false);
-      return;
-    }
-    setProductLoading(true);
-    fetchProductBySlug(productSlug)
-      .then((data) => {
-        if (mounted) setProduct(data);
-      })
-      .finally(() => {
-        if (mounted) setProductLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [productSlug]);
-
-  if (productLoading) {
-    return (
-      <section className="section">
-        <div className="container">
-          <div className="muted">Loading product...</div>
-        </div>
-      </section>
-    );
-  }
-
-  if (!product) {
-    return (
-      <section className="section">
+      // ...existing code...
         <div className="container">
           <div className="muted">Product not found.</div>
           <Link className="btn" to="/">
@@ -488,26 +457,8 @@ export default function App() {
             setItems(incoming);
             setTotal(data.total || incoming.length);
           }
-        })
-        .then(() => {
-          const normalizedCategoriesTree = buildCategoryTreeFromFlat(flatCategories);
-          setProductCategoriesTree(normalizedCategoriesTree);
-          setProductCategories(
-            normalizedCategoriesTree.length
-              ? flattenCategoryTree(normalizedCategoriesTree)
-              : flatCategories
-          );
-          setProductCategoriesLoading(false);
-          setProducts(productsRes.items || []);
-          setProductTotal(productsRes.total || 0);
-        })
-        .finally(() => {
-          if (mounted) setLoading(false);
         });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+// ...existing code...
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
