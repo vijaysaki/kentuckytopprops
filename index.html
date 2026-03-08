@@ -79,15 +79,16 @@
             </li>
 
             <li class="relative flex items-center">
-              <a href="/products" class="block py-2 px-3 rounded hover:bg-slate-100">Products</a>
               <button
                 id="products-dropdown-button"
                 data-dropdown-toggle="products-dropdown"
                 data-dropdown-placement="bottom-start"
-                class="p-2 rounded hover:bg-slate-100"
+                class="flex items-center gap-1 py-2 px-3 rounded hover:bg-slate-100"
                 type="button"
-                aria-label="Open products menu"
+                aria-expanded="false"
+                aria-haspopup="true"
               >
+                Products
                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24">
                   <path
                     stroke="currentColor"
@@ -111,15 +112,16 @@
             </li>
 
             <li class="relative flex items-center">
-              <a href="/services" class="block py-2 px-3 rounded hover:bg-slate-100">Services</a>
               <button
                 id="services-dropdown-button"
                 data-dropdown-toggle="services-dropdown"
                 data-dropdown-placement="bottom-start"
-                class="p-2 rounded hover:bg-slate-100"
+                class="flex items-center gap-1 py-2 px-3 rounded hover:bg-slate-100"
                 type="button"
-                aria-label="Open services menu"
+                aria-expanded="false"
+                aria-haspopup="true"
               >
+                Services
                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24">
                   <path
                     stroke="currentColor"
@@ -395,7 +397,9 @@
 
       function slugFromUrl(url) {
         if (!url || typeof url !== "string") return "";
-        return url.replace(/^\/products\/?/, "").replace(/\/.*$/, "").trim();
+        const path = url.replace(/^https?:\/\/[^/]+/, "").replace(/^\/+/, "");
+        const segments = path.split("/").filter(Boolean);
+        return (segments[segments.length - 1] || "").toLowerCase();
       }
 
       function adaptProductCategoriesToMenu(categories) {
@@ -771,6 +775,18 @@
         `;
       }
 
+      function getProductDescription(product, maxWords) {
+        if (product.shortDescription && product.shortDescription.trim()) {
+          const words = product.shortDescription.trim().split(/\s+/);
+          return words.length > maxWords ? words.slice(0, maxWords).join(" ") + "…" : product.shortDescription.trim();
+        }
+        const html = product.descriptionHtml || product.description || "";
+        const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        if (!text) return null;
+        const words = text.split(/\s+/).filter(Boolean);
+        return words.length > maxWords ? words.slice(0, maxWords).join(" ") + "…" : text;
+      }
+
       function renderProductItemsGrid(products) {
         if (!Array.isArray(products) || !products.length) {
           return `<p class="text-slate-600 mt-4">No products found in this category.</p>`;
@@ -782,15 +798,11 @@
             <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               ${products
                 .map((product) => {
-                  const price =
-                    product.priceCents != null
-                      ? `${product.currency || "USD"} ${(Number(product.priceCents) / 100).toFixed(2)}`
-                      : "";
+                  const description = getProductDescription(product, 25);
                   return `
                     <article class="border border-slate-200 rounded-lg p-4 bg-white">
                       <h4 class="text-base font-semibold text-slate-800">${product.name || "Untitled Product"}</h4>
-                      <p class="mt-1 text-sm text-slate-600">${product.shortDescription || "No short description available."}</p>
-                      ${price ? `<p class="mt-2 text-sm font-medium text-slate-800">${price}</p>` : ""}
+                      ${description ? `<p class="mt-1 text-sm text-slate-600">${description}</p>` : ""}
                     </article>
                   `;
                 })
@@ -823,61 +835,14 @@
 
         titleEl.textContent = matched.name || "Products";
         let productsMarkup = "";
-        let apiDebug = "";
         try {
-          const params = getTenantQueryParams();
-          params.set("categorySlug", matched.slug || "");
-          params.set("categoryId", matched.id || "");
-          params.set("limit", "24");
-          params.set("offset", "0");
-          const apiUrl = `${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}`;
-
           const { items: productItems } = await fetchProductsForCategory(matched);
           productsMarkup = renderProductItemsGrid(productItems);
-
-          apiDebug = `
-            <div class="mt-2 p-3 rounded bg-green-50 border border-green-200 text-sm">
-              <strong>API:</strong> ${productItems.length} products loaded<br/>
-              <a href="${apiUrl}" target="_blank" rel="noopener" class="text-blue-600 break-all">${apiUrl}</a>
-            </div>`;
         } catch (error) {
-          const params = getTenantQueryParams();
-          params.set("categorySlug", matched.slug || "");
-          params.set("categoryId", matched.id || "");
-          const apiUrl = `${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}`;
           productsMarkup = `<p class="text-slate-500 mt-4">Unable to load products for this category right now.</p>`;
-          apiDebug = `
-            <div class="mt-2 p-3 rounded bg-red-50 border border-red-200 text-sm text-red-800">
-              <strong>API Error:</strong> ${error?.message || String(error)}<br/>
-              <strong>URL attempted:</strong> <a href="${apiUrl}" target="_blank" rel="noopener" class="text-blue-600 break-all">${apiUrl}</a>
-              <p class="mt-1 text-xs">Check Network tab (F12) for CORS or response details.</p>
-            </div>`;
         }
 
-        const tenantId = TENANT_ID || "(from domain)";
-        const categoryId = matched.id || "(none)";
-        const categorySlug = matched.slug || "";
-        const debugSql = `-- Tenant: ${tenantId} | Category ID: ${categoryId} | Slug: ${categorySlug}
-SELECT p.id, p.name, p.slug, p.category_id, p.status
-FROM product_module.products p
-WHERE p.tenant_id = '${tenantId}'
-  AND p.status = 'active'
-  AND (
-    p.category_id = '${categoryId}'
-    OR p.id IN (
-      SELECT product_id FROM product_module.category_products
-      WHERE category_id = '${categoryId}' AND tenant_id = '${tenantId}'
-    )
-  )
-ORDER BY p.sort_order ASC, p.created_at DESC;`;
-
-        const debugBlock = `
-          <details class="mt-6 border border-slate-200 rounded-lg">
-            <summary class="px-4 py-2 bg-slate-50 cursor-pointer text-sm text-slate-600 hover:bg-slate-100">Debug: SQL with tenant_id & category_id (click to expand, select to copy)</summary>
-            <pre class="p-4 text-xs font-mono bg-slate-900 text-slate-100 overflow-x-auto whitespace-pre-wrap">${debugSql.replace(/</g, "&lt;")}</pre>
-          </details>`;
-
-        bodyEl.innerHTML = `${renderItemDetail(matched, "/products", "Subcategories")}${productsMarkup}${apiDebug}${debugBlock}`;
+        bodyEl.innerHTML = `${renderItemDetail(matched, "/products", "Subcategories")}${productsMarkup}`;
       }
 
       async function hydrateServicesRoute(segments) {

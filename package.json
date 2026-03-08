@@ -3,7 +3,7 @@
     "serve": "^14.2.6"
   },
   "scripts": {
-    "dev": "serve -s . -l 3000",
-    "start": "serve -s . -l 3000"
+    "dev": "serve -s . -l 3001",
+    "start": "serve -s . -l 3001"
   }
 }
