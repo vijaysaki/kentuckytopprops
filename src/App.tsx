@@ -1,23 +1,3 @@
-<<<<<<< HEAD
-import { useEffect, useState } from "react";
-import { Link, Route, Routes, useParams, useSearchParams } from "react-router-dom";
-import "./App.css";
-import { fetchProductsPage } from "./api/public";
-=======
-import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import "./App.css";
-  currency?: string | null;
-};
-
-type ProductCategory = {
-  id: string;
-  name: string;
-  slug?: string;
-};
-
-function ProductsCategoryPage(_: { categories: ProductCategory[] }) {
-  const { categorySlug } = useParams();
   const [searchParams] = useSearchParams();
   const [pageSize, setPageSize] = useState(20);
   const pageParam = Number(searchParams.get("page") || "1");
