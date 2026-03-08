@@ -499,13 +499,13 @@ export default function App() {
       setProductCategoriesLoading(false);
       setProducts(productsRes.items || []);
       setProductTotal(productsRes.total || 0);
+      return () => {
+        mounted = false;
+      };
     })
     .finally(() => {
       if (mounted) setLoading(false);
     });
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   useEffect(() => {
