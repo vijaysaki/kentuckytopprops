@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
+import "./navbar.css";
 import { fetchProductsPage } from "./api/public";
 
 // Minimal Product and ProductCategory types
@@ -90,6 +91,41 @@ function DropdownMenu() {
   );
 }
 
+function Navbar() {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  return (
+    <nav className="navbar">
+      <div className="navbar-container">
+        <a href="/" className="navbar-logo">
+          <img src="https://flowbite.com/docs/images/logo.svg" alt="Logo" style={{ height: 28 }} />
+          Kentucky Top Props
+        </a>
+        <ul className="navbar-menu">
+          <li>
+            <a className="navbar-link" href="/">Home</a>
+          </li>
+          <li>
+            <a className="navbar-link" href="/products/cat-one">Category One</a>
+          </li>
+          <li>
+            <a className="navbar-link" href="/products/cat-two">Category Two</a>
+          </li>
+          <li className={dropdownOpen ? "dropdown open" : "dropdown"}>
+            <button className="dropdown-toggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
+              More ▼
+            </button>
+            <ul className="dropdown-menu">
+              <li><a href="#about">About</a></li>
+              <li><a href="#services">Services</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  );
+}
+
 export default function App() {
   // Example categories for demonstration
   const categories: ProductCategory[] = [
@@ -99,7 +135,7 @@ export default function App() {
 
   return (
     <>
-      <DropdownMenu />
+      <Navbar />
       <Routes>
         <Route path="/" element={<div>Welcome to Kentucky Top Props!</div>} />
         <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
