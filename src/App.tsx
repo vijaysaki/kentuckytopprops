@@ -69,6 +69,27 @@ function ProductsCategoryPage(_: { categories: ProductCategory[] }) {
   );
 }
 
+function DropdownMenu() {
+  const [open, setOpen] = useState(false);
+  return (
+    <nav className="navbar">
+      <div className="dropdown">
+        <button className="dropdown-toggle" onClick={() => setOpen(!open)}>
+          Menu ▼
+        </button>
+        {open && (
+          <ul className="dropdown-menu">
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/products/cat-one">Category One</Link></li>
+            <li><Link to="/products/cat-two">Category Two</Link></li>
+            {/* Add more menu items as needed */}
+          </ul>
+        )}
+      </div>
+    </nav>
+  );
+}
+
 export default function App() {
   // Example categories for demonstration
   const categories: ProductCategory[] = [
@@ -77,10 +98,13 @@ export default function App() {
   ];
 
   return (
-    <Routes>
-      <Route path="/" element={<div>Welcome to Kentucky Top Props!</div>} />
-      <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
-      {/* Add more routes/components as needed */}
-    </Routes>
+    <>
+      <DropdownMenu />
+      <Routes>
+        <Route path="/" element={<div>Welcome to Kentucky Top Props!</div>} />
+        <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
+        {/* Add more routes/components as needed */}
+      </Routes>
+    </>
   );
 }
