@@ -239,40 +239,6 @@ function ProductsCategoryPage(_: { categories: ProductCategory[] }) {
   );
 }
 
-<<<<<<< HEAD
-function Navbar() {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <a href="/" className="navbar-logo">
-          <img src="https://flowbite.com/docs/images/logo.svg" alt="Logo" style={{ height: 28 }} />
-          Kentucky Top Props
-        </a>
-        <ul className="navbar-menu">
-          <li>
-            <a className="navbar-link" href="/">Home</a>
-          </li>
-          <li>
-            <a className="navbar-link" href="/products/cat-one">Category One</a>
-          </li>
-          <li>
-            <a className="navbar-link" href="/products/cat-two">Category Two</a>
-          </li>
-          <li className={dropdownOpen ? "dropdown open" : "dropdown"}>
-            <button className="dropdown-toggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
-              More ▼
-            </button>
-            <ul className="dropdown-menu">
-              <li><a href="#about">About</a></li>
-              <li><a href="#services">Services</a></li>
-              <li><a href="#contact">Contact</a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-    </nav>
-=======
 function ProductsIndexPage({ categories }: { categories: ProductCategory[] }) {
   if (categories.length > 0) {
     const first = getCategorySlug(categories[0]);
