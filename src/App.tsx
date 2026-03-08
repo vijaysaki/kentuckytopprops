@@ -78,6 +78,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<div>Welcome to Kentucky Top Props!</div>} />
       <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
       {/* Add more routes/components as needed */}
     </Routes>
