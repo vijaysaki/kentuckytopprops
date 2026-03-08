@@ -7,39 +7,6 @@ import { fetchProductsPage } from "./api/public";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import "./App.css";
-import {
-  fetchContactFormBySlug,
-  fetchContactForms,
-  fetchMenus,
-  fetchPages,
-  fetchProductBySlug,
-  fetchProductCategoriesTree,
-  fetchProductCategories,
-  fetchProductsPage,
-  fetchServicesTree,
-  flattenCategoryTree,
-  submitContactForm,
-} from "./api/public";
-import type {
-  ContactForm,
-  ContactFormField,
-  Menu,
-  Page,
-  Product,
-  ProductCategory,
-  ProductImage,
-  Service,
-} from "./api/types";
->>>>>>> parent of 46b5ff4 (new)
-
-// Minimal Product and ProductCategory types
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  shortDescription?: string;
-  descriptionHtml?: string;
-  priceCents?: string | null;
   currency?: string | null;
 };
 
@@ -62,121 +29,97 @@ function ProductsCategoryPage(_: { categories: ProductCategory[] }) {
 
   useEffect(() => {
 =======
-  const matchedCategory = categories.find(
-    (item) => getCategorySlug(item) === categorySlug || item.id === categorySlug
-  );
-  const categoryId = matchedCategory?.id;
-  const categorySlugValue = matchedCategory?.slug || categorySlug;
-
-  useEffect(() => {
-    let mounted = true;
-    if (categorySlug && !categoryId) {
-      setItems([]);
-      setTotal(0);
-      setLoading(false);
-      return () => {
-        mounted = false;
-      };
-    }
->>>>>>> parent of 46b5ff4 (new)
-    setLoading(true);
-    fetchProductsPage({
-      page: requestedPage,
-      pageSize,
 <<<<<<< HEAD
       categorySlug,
     }).then((data) => {
       setItems(data.items || []);
-      setTotal(data.total || 0);
-      setLoading(false);
-    });
-  }, [categorySlug, requestedPage, pageSize]);
-
-  return (
-    <section className="section">
-      <h2>Products in Category</h2>
-      <div>
-        Page size:
-        <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))}>
-          {[10, 20, 50].map(size => (
-            <option key={size} value={size}>{size}</option>
-          ))}
-        </select>
-=======
-      categoryId: categoryId || undefined,
-      categorySlug: categorySlugValue || undefined,
-    })
-      .then((data) => {
-        if (!mounted) return;
-        const incoming = data.items || [];
-        if (categoryId || categorySlugValue) {
-          const filtered = incoming.filter((product) => {
-            const direct = product.category;
-            if (direct) {
-              if (categoryId && direct.id === categoryId) return true;
-              if (categorySlugValue && direct.slug === categorySlugValue) return true;
-            }
-            return (product.categoryLinks || []).some((link) => {
-              const cat = link.category;
-              if (!cat) return false;
-              if (categoryId && cat.id === categoryId) return true;
-              if (categorySlugValue && cat.slug === categorySlugValue) return true;
-              return false;
-            });
-          });
-          setItems(filtered);
-          setTotal(filtered.length);
-        } else {
-          setItems(incoming);
-          setTotal(data.total || incoming.length);
-        }
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
+        categorySlug,
+      }).then((data) => {
+        setItems(data.items || []);
+        setTotal(data.total || 0);
+        setLoading(false);
       });
-    return () => {
-      mounted = false;
-    };
-  }, [categoryId, categorySlug, requestedPage]);
+    }, [categorySlug, requestedPage, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
-  const categoryName = matchedCategory?.name || "Products";
-  const basePath = categorySlug ? `/products/${categorySlug}` : "/products";
-
-  useEffect(() => {
-    if (requestedPage !== currentPage) {
-      setSearchParams({ page: String(currentPage) });
-    }
-  }, [requestedPage, currentPage, setSearchParams]);
-
-  return (
-    <section className="section product-listing">
-      <div className="container">
-        <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <Link to="/">Home</Link>
-          <span className="breadcrumb-sep">/</span>
-          <Link to="/products">Products</Link>
-          <span className="breadcrumb-sep">/</span>
-          <span>{categoryName}</span>
-        </nav>
-        <div className="section-header">
-          <h2>{categoryName}</h2>
-          <div className="muted">
-            {total} item{total === 1 ? "" : "s"}
-          </div>
+    return (
+      <section className="section">
+        <h2>Products in Category</h2>
+        <div>
+          Page size:
+          <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))}>
+            {[10, 20, 50].map(size => (
+              <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
         </div>
-        {loading ? (
-          <div className="muted">Loading products...</div>
-        ) : items.length === 0 ? (
-          <div className="muted">No products found in this category.</div>
-        ) : (
-          <>
-            <div className="grid">
-              {items.map((product) => (
-                <Link key={product.id} className="card product-card" to={getProductPath(product)}>
-                  {getImageUrl(product) && (
-                    <div className="card-image">
+        {loading ? <div>Loading...</div> : (
+          <ul>
+            {items.map(product => (
+              <li key={product.id}>
+                <Link to={`/products/${product.slug}`}>{product.name}</Link>
+                {product.shortDescription && <div>{product.shortDescription}</div>}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div>Total: {total}</div>
+      </section>
+    );
+  }
+
+  function Navbar() {
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    return (
+      <nav className="navbar">
+        <div className="navbar-container">
+          <a href="/" className="navbar-logo">
+            <img src="https://flowbite.com/docs/images/logo.svg" alt="Logo" style={{ height: 28 }} />
+            Kentucky Top Props
+          </a>
+          <ul className="navbar-menu">
+            <li>
+              <a className="navbar-link" href="/">Home</a>
+            </li>
+            <li>
+              <a className="navbar-link" href="/products/cat-one">Category One</a>
+            </li>
+            <li>
+              <a className="navbar-link" href="/products/cat-two">Category Two</a>
+            </li>
+            <li className={dropdownOpen ? "dropdown open" : "dropdown"}>
+              <button className="dropdown-toggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                More ▼
+              </button>
+              <ul className="dropdown-menu">
+                <li><a href="#about">About</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#contact">Contact</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    );
+  }
+
+  export default function App() {
+    // Example categories for demonstration
+    const categories: ProductCategory[] = [
+      { id: "1", name: "Category One", slug: "cat-one" },
+      { id: "2", name: "Category Two", slug: "cat-two" },
+    ];
+
+    return (
+      <>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<div>Welcome to Kentucky Top Props!</div>} />
+          <Route path="/products/:categorySlug" element={<ProductsCategoryPage categories={categories} />} />
+          {/* Add more routes/components as needed */}
+        </Routes>
+      </>
+    );
+  }
                       <img src={getImageUrl(product)} alt={product.name} />
                     </div>
                   )}
