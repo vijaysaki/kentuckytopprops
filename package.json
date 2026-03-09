@@ -3,7 +3,8 @@
     "serve": "^14.2.6"
   },
   "scripts": {
-    "build": "node -e \"const fs=require('fs');const p=require('path');fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');if(fs.existsSync('admin')){fs.cpSync('admin','dist/admin',{recursive:true});}console.log('Static assets copied to dist');\"",
+    "build:html": "node build.js",
+    "build": "node -e \"const fs=require('fs');fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');if(fs.existsSync('admin')){fs.cpSync('admin','dist/admin',{recursive:true});}if(fs.existsSync('assets')){fs.cpSync('assets','dist/assets',{recursive:true});}console.log('Copied to dist');\"",
     "dev": "serve -s . -l 3001",
     "start": "serve -s . -l 3001"
   }

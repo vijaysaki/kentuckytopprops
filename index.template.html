@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kentucky Top Props</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"
+    />
+    <style>
+      /* Force consistent hover on nav bar links/buttons (dark teal area only) - override Flowbite defaults */
+      nav > div > div:first-child [data-dropdown-toggle]:hover,
+      nav > div > div:first-child [data-dropdown-toggle]:focus,
+      nav > div > div:first-child [data-collapse-toggle]:hover,
+      nav #navbar-main .cms-page-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 min-h-screen">
+    <!-- LAYOUT -->
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
