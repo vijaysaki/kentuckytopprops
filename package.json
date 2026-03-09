@@ -3,6 +3,7 @@
     "serve": "^14.2.6"
   },
   "scripts": {
+    "build": "echo 'Static site - no build step'",
     "dev": "serve -s . -l 3001",
     "start": "serve -s . -l 3001"
   }
