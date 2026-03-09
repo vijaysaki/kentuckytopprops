@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "serve -s . -l 3000",
     "start": "serve -s . -l 3000"
+      ,
       "build": "echo \"No build step defined\""
     }
 }
