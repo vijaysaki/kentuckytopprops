@@ -11,11 +11,11 @@
     />
   </head>
   <body class="bg-slate-50 min-h-screen">
-    <nav class="border-b border-slate-700/50" style="background-color: #224245;">
+    <nav class="border-b border-slate-700/50" style="background-color: #02404B;">
       <div class="max-w-screen-xl mx-auto p-3">
         <div class="flex items-center justify-between gap-4">
           <a href="/" class="flex items-center shrink-0">
-            <img src="\assets/logo.png" alt="Kentucky Top Props" class="h-16 md:h-20 w-auto object-contain" />
+            <img src="assets/logo.png" alt="Kentucky Top Props" class="h-20 md:h-24 w-auto object-contain" />
           </a>
 
           <div class="hidden md:block flex-1 max-w-md">
@@ -130,7 +130,7 @@
                 id="services-dropdown-button"
                 data-dropdown-toggle="services-dropdown"
                 data-dropdown-placement="bottom-start"
-                class="flex items-center gap-1 py-2 px-3 rounded hover:bg-slate-100"
+                class="flex items-center gap-1 py-2 px-3 rounded hover:bg-white/10"
                 type="button"
                 aria-expanded="false"
                 aria-haspopup="true"
@@ -255,22 +255,24 @@
       async function fetchMenuData(endpoint, fallback) {
         try {
           const params = getTenantQueryParams();
-          const response = await fetch(`${API_BASE_URL}${endpoint}?${params.toString()}`);
-          if (!response.ok) throw new Error("API request failed");
+          const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
+          const response = await fetch(url, { mode: "cors", credentials: "omit" });
+          if (!response.ok) throw new Error(`API ${response.status}: ${response.statusText}`);
           const payload = await response.json();
           const data = Array.isArray(payload) ? payload : payload.data;
           const normalized = normalizeMenuItems(data);
           return normalized.length ? normalized : fallback;
         } catch (error) {
-          console.warn("Using fallback menu data for", endpoint, error);
+          console.warn("[KTP] API failed for", endpoint, "- using fallback. Error:", error?.message || error);
           return fallback;
         }
       }
 
       async function fetchTenantScoped(endpoint) {
         const params = getTenantQueryParams();
-        const response = await fetch(`${API_BASE_URL}${endpoint}?${params.toString()}`);
-        if (!response.ok) throw new Error(`Request failed for ${endpoint}`);
+        const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
+        const response = await fetch(url, { mode: "cors", credentials: "omit" });
+        if (!response.ok) throw new Error(`Request failed for ${endpoint}: ${response.status}`);
         return response.json();
       }
 
@@ -281,7 +283,7 @@
             params.set(key, String(value));
           }
         });
-        const response = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}`);
+        const response = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}`, { mode: "cors", credentials: "omit" });
         if (!response.ok) {
           let body = "";
           try { body = await response.text(); } catch (_) {}
@@ -293,7 +295,7 @@
 
       async function fetchProductBySlug(slug) {
         const params = getTenantQueryParams();
-        const response = await fetch(`${API_BASE_URL}/public/products/by-slug/${encodeURIComponent(slug)}?${params.toString()}`);
+        const response = await fetch(`${API_BASE_URL}/public/products/by-slug/${encodeURIComponent(slug)}?${params.toString()}`, { mode: "cors", credentials: "omit" });
         if (!response.ok) throw new Error(`Product not found: ${response.status}`);
         return response.json();
       }
@@ -350,9 +352,14 @@
 
       async function getPagesCache() {
         if (pagesCache) return pagesCache;
-        const payload = await fetchTenantScoped(PAGES_ENDPOINT);
-        pagesCache = Array.isArray(payload) ? payload : payload.data;
-        return Array.isArray(pagesCache) ? pagesCache : [];
+        try {
+          const payload = await fetchTenantScoped(PAGES_ENDPOINT);
+          pagesCache = Array.isArray(payload) ? payload : payload.data;
+          return Array.isArray(pagesCache) ? pagesCache : [];
+        } catch (error) {
+          console.warn("[KTP] Failed to load pages from API:", error?.message || error);
+          return [];
+        }
       }
 
       let submenuCounter = 0;
@@ -1046,8 +1053,15 @@
         } else {
           const titleEl = document.getElementById("content-title");
           const bodyEl = document.getElementById("content-body");
-          if (titleEl) titleEl.textContent = pageKey.charAt(0).toUpperCase() + pageKey.slice(1);
-          if (bodyEl) bodyEl.innerHTML = "";
+          const title = pageKey.charAt(0).toUpperCase() + pageKey.slice(1);
+          if (titleEl) titleEl.textContent = title;
+          if (bodyEl) {
+            const fallbackContent = {
+              about: "<p class='text-slate-600'>Learn more about Kentucky Top Props and our services.</p>",
+              contact: "<p class='text-slate-600'>Get in touch with us.</p>"
+            };
+            bodyEl.innerHTML = fallbackContent[pageKey] || "";
+          }
         }
 
         if (pageKey === "contact") {
@@ -1228,7 +1242,7 @@
           await ensureProductsLoaded();
           flattenForSearch(productsCatalogCache, "Products", items);
           const params = getTenantQueryParams();
-          const prodRes = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}&limit=100`);
+          const prodRes = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}&limit=100`, { mode: "cors", credentials: "omit" });
           if (prodRes.ok) {
             const data = await prodRes.json();
             const prods = data?.items || [];
@@ -1243,7 +1257,7 @@
 
         try {
           const params = getTenantQueryParams();
-          const blogRes = await fetch(`${API_BASE_URL}${BLOGS_ENDPOINT}?${params.toString()}&limit=50`);
+          const blogRes = await fetch(`${API_BASE_URL}${BLOGS_ENDPOINT}?${params.toString()}&limit=50`, { mode: "cors", credentials: "omit" });
           if (blogRes.ok) {
             const data = await blogRes.json();
             const posts = data?.items || data || [];
@@ -1271,20 +1285,26 @@
         const productsDropdownButton = document.getElementById("products-dropdown-button");
         const servicesDropdownButton = document.getElementById("services-dropdown-button");
         if (productsDropdownButton) {
-          productsDropdownButton.addEventListener("click", () => void renderProductsMenuIfNeeded());
+          productsDropdownButton.addEventListener("click", () => void renderProductsMenuIfNeeded(), true);
         }
         if (servicesDropdownButton) {
-          servicesDropdownButton.addEventListener("click", () => void renderServicesMenuIfNeeded());
+          servicesDropdownButton.addEventListener("click", () => void renderServicesMenuIfNeeded(), true);
         }
 
         bindSearch("menu-search", "search-results", () => searchIndexCache);
         bindSearch("menu-search-mobile", "search-results-mobile", () => searchIndexCache);
 
         void buildSearchIndex();
+        void renderProductsMenuIfNeeded();
+        void renderServicesMenuIfNeeded();
         await hydratePageFromPathname(window.location.pathname);
       }
 
-      initNavbarMenus();
+      initNavbarMenus().catch((err) => {
+        console.error("[KTP] Init failed:", err);
+        document.getElementById("content-title").textContent = "Error loading";
+        document.getElementById("content-body").innerHTML = "<p class='text-red-600'>Unable to load. Check console. Are you using npm run dev? (file:// will not work)</p>";
+      });
     </script>
   </body>
 </html>
