@@ -3,7 +3,7 @@
     "serve": "^14.2.6"
   },
   "scripts": {
-    "build": "echo 'Static site - no build step'",
+    "build": "node -e \"const fs=require('fs');const p=require('path');fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');if(fs.existsSync('admin')){fs.cpSync('admin','dist/admin',{recursive:true});}console.log('Static assets copied to dist');\"",
     "dev": "serve -s . -l 3001",
     "start": "serve -s . -l 3001"
   }
