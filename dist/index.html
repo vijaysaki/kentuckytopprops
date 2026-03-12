@@ -187,6 +187,17 @@
       const TENANT_DOMAIN = "kentuckytopprops.com";
       const TENANT_ID = "48b0c409-b37b-4719-9ebd-8678f774db64";
 
+      (function restoreSpaPathOnDirectRefresh() {
+        const params = new URLSearchParams(window.location.search);
+        const spaPath = params.get("__spa");
+        if (!spaPath) return;
+        try {
+          history.replaceState({}, "", decodeURIComponent(spaPath));
+        } catch (_) {
+          history.replaceState({}, "", "/");
+        }
+      })();
+
       const fallbackProducts = [
         {
           name: "Top Props",
