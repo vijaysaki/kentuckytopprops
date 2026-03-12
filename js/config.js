@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://api.adeptlogics.com";
+export const API_BASE_URL = "https://api.adeptlogics.com/api";
 export const PRODUCTS_ENDPOINT = "/public/products/categories";
 export const PRODUCTS_LIST_ENDPOINT = "/public/products";
 export const SERVICES_ENDPOINT = "/public/services/tree";
