@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Kentucky Top Props</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,300;1,600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1208; --deep: #0d0b07; --parchment: #f0e8d5; --aged: #e8dcc0;
+  --cream: #faf5ea; --red: #c0271a; --red-dim: #8a1a10; --tan: #b89a6a;
+  --tan-dim: #7a6440; --rule: rgba(26,18,8,0.12);
+  --font-title: 'Bebas Neue', sans-serif; --font-slab: 'Special Elite', monospace;
+  --font-body: 'Barlow Condensed', sans-serif; --font-type: 'Courier Prime', monospace;
+  --nav-h: 68px; --ease: 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--cream); color: var(--ink); overflow-x: hidden; }
+body::after { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.028; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); }
+
+nav { position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); z-index: 1000; background: var(--ink); border-bottom: 3px solid var(--red); }
+.nav-inner { max-width: 1320px; width: 100%; margin: 0 auto; padding: 0 2.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+.logo-clapper { width: 44px; height: 38px; background: var(--parchment); border: 2px solid var(--tan); border-radius: 3px; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.clapper-stripes { height: 14px; background: repeating-linear-gradient(-45deg, var(--ink) 0px, var(--ink) 4px, var(--parchment) 4px, var(--parchment) 8px); border-bottom: 1.5px solid var(--tan); }
+.clapper-body { flex: 1; display: flex; align-items: center; justify-content: center; }
+.clapper-body span { font-family: var(--font-title); font-size: 11px; color: var(--ink); letter-spacing: 1px; }
+.logo-name-main { font-family: var(--font-title); font-size: 22px; letter-spacing: 0.05em; color: var(--parchment); line-height: 1; display: block; }
+.logo-name-sub { font-family: var(--font-type); font-size: 9px; color: var(--tan); letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-top: 2px; }
+.nav-links { display: flex; align-items: center; }
+.nav-links a { font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(240,232,213,0.65); text-decoration: none; padding: 8px 16px; position: relative; transition: color var(--ease); }
+.nav-links a::after { content: ''; position: absolute; bottom: 0; left: 16px; right: 16px; height: 2px; background: var(--red); transform: scaleX(0); transition: transform var(--ease); }
+.nav-links a:hover, .nav-links a.active { color: var(--parchment); }
+.nav-links a:hover::after, .nav-links a.active::after { transform: scaleX(1); }
+.has-dd { position: relative; }
+.has-dd > a::before { content: '▾'; margin-left: 5px; font-size: 9px; }
+.dd { position: absolute; top: calc(100% + 3px); left: 0; background: var(--ink); border: 1px solid var(--tan-dim); border-top: 2px solid var(--red); min-width: 210px; padding: 6px; opacity: 0; pointer-events: none; transition: var(--ease); }
+.has-dd:hover .dd { opacity: 1; pointer-events: all; }
+.dd a { display: block; padding: 8px 12px !important; font-size: 12px !important; letter-spacing: 0.1em !important; color: rgba(240,232,213,0.65) !important; border-left: 2px solid transparent; transition: var(--ease) !important; white-space: nowrap; }
+.dd a::after { display: none !important; }
+.dd a:hover { color: var(--parchment) !important; background: rgba(192,39,26,0.1); border-left-color: var(--red) !important; }
+.nav-quote { background: var(--red) !important; color: var(--parchment) !important; font-weight: 700 !important; }
+.nav-quote::after { display: none !important; }
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+.hamburger span { width: 24px; height: 1.5px; background: var(--parchment); display: block; }
+.mob-menu { position: fixed; top: var(--nav-h); left: 0; right: 0; bottom: 0; background: var(--ink); z-index: 999; padding: 3rem 2.5rem; transform: translateX(100%); transition: transform 0.38s; border-top: 3px solid var(--red); }
+.mob-menu.open { transform: translateX(0); }
+.mob-links a { display: block; font-family: var(--font-title); font-size: 42px; color: var(--parchment); text-decoration: none; padding: 8px 0; border-bottom: 1px solid rgba(240,232,213,0.07); }
+@media (max-width: 780px) { .nav-links { display: none; } .hamburger { display: flex; } }
+
+/* PAGE HERO */
+.page-hero { padding-top: var(--nav-h); background: var(--deep); min-height: 480px; display: flex; align-items: flex-end; position: relative; overflow: hidden; }
+.page-hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(240,232,213,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(240,232,213,0.03) 1px, transparent 1px); background-size: 60px 60px; }
+.page-hero-accent { position: absolute; right: 0; bottom: 0; font-family: var(--font-title); font-size: clamp(120px, 20vw, 220px); color: rgba(240,232,213,0.03); letter-spacing: -4px; line-height: 0.85; pointer-events: none; }
+.page-hero-filmstrip { position: absolute; top: var(--nav-h); left: 0; right: 0; height: 36px; background: var(--ink); border-bottom: 2px solid rgba(240,232,213,0.06); display: flex; align-items: center; overflow: hidden; padding: 0 10px; gap: 0; }
+.fh { width: 26px; height: 20px; border: 1.5px solid rgba(240,232,213,0.1); border-radius: 3px; background: var(--deep); flex-shrink: 0; margin: 0 6px; }
+.page-hero-content { position: relative; z-index: 2; max-width: 1320px; width: 100%; margin: 0 auto; padding: 3rem 2.5rem 4.5rem; margin-top: 36px; }
+.breadcrumb { font-family: var(--font-type); font-size: 11px; color: rgba(192,39,26,0.7); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2rem; }
+.breadcrumb a { color: inherit; text-decoration: none; }
+.breadcrumb span { margin: 0 8px; opacity: 0.4; }
+.page-hero h1 { font-family: var(--font-title); font-size: clamp(64px, 10vw, 120px); line-height: 0.88; color: var(--parchment); letter-spacing: 0.02em; margin-bottom: 1.5rem; }
+.page-hero h1 em { color: var(--red); font-style: normal; }
+.page-hero-desc { font-family: var(--font-type); font-size: 14px; color: rgba(240,232,213,0.4); max-width: 560px; line-height: 1.8; letter-spacing: 0.03em; }
+
+/* SECTIONS */
+.s-wrap { max-width: 1320px; margin: 0 auto; padding: 0 2.5rem; }
+
+/* STORY SECTION */
+.story-sec { background: var(--parchment); padding: 7rem 0; }
+.story-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; }
+.eyebrow { display: flex; align-items: center; gap: 10px; font-family: var(--font-type); font-size: 11px; color: var(--red); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 14px; }
+.eyebrow::before { content: ''; width: 28px; height: 1.5px; background: var(--red); }
+h2 { font-family: var(--font-title); font-size: clamp(42px, 5.5vw, 68px); line-height: 0.9; letter-spacing: 0.02em; color: var(--ink); margin-bottom: 2rem; }
+.story-body p { font-size: 15px; font-weight: 300; letter-spacing: 0.02em; color: rgba(26,18,8,0.65); line-height: 1.85; margin-bottom: 1.25rem; }
+.story-body p strong { color: var(--ink); font-weight: 600; }
+.pull-quote { border-left: 3px solid var(--red); padding-left: 1.5rem; margin: 2.5rem 0; }
+.pull-quote blockquote { font-family: var(--font-slab); font-size: 19px; font-style: italic; color: var(--ink); line-height: 1.55; }
+.pull-quote cite { display: block; font-family: var(--font-type); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--red); margin-top: 12px; }
+
+/* TIMELINE */
+.timeline { margin-top: 0; }
+.tl { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--rule); position: relative; }
+.tl-item:first-child { border-top: 1px solid var(--rule); }
+.tl-year { flex-shrink: 0; width: 64px; }
+.tl-year span { font-family: var(--font-title); font-size: 28px; color: var(--red); line-height: 1; display: block; }
+.tl-content {}
+.tl-title { font-family: var(--font-body); font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin-bottom: 4px; }
+.tl-desc { font-size: 13px; font-weight: 300; color: rgba(26,18,8,0.55); line-height: 1.65; }
+
+/* STATS BAND */
+.stats-band { background: var(--red); padding: 4.5rem 2.5rem; position: relative; overflow: hidden; }
+.stats-band::before { content: 'KTP'; position: absolute; right: -10px; top: 50%; transform: translateY(-50%); font-family: var(--font-title); font-size: 280px; color: rgba(0,0,0,0.07); line-height: 1; pointer-events: none; }
+.stats-grid { max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: repeat(4,1fr); gap: 0; position: relative; z-index: 1; }
+.stat-item { text-align: center; padding: 1rem; border-right: 1px solid rgba(240,232,213,0.15); }
+.stat-item:last-child { border-right: none; }
+.stat-n { font-family: var(--font-title); font-size: 64px; color: var(--parchment); line-height: 1; display: block; }
+.stat-l { font-family: var(--font-type); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(240,232,213,0.55); margin-top: 6px; }
+
+/* TEAM */
+.team-sec { background: var(--cream); padding: 7rem 0; }
+.team-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; background: rgba(26,18,8,0.09); margin-top: 4rem; }
+.team-card { background: white; overflow: hidden; }
+.tc-photo { height: 220px; background: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 64px; position: relative; }
+.tc-badge { position: absolute; top: 0; right: 0; background: var(--red); color: var(--parchment); font-family: var(--font-type); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 10px; }
+.tc-body { padding: 1.5rem; border-top: 3px solid var(--parchment); transition: border-color var(--ease); }
+.team-card:hover .tc-body { border-top-color: var(--red); }
+.tc-name { font-family: var(--font-body); font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-bottom: 4px; }
+.tc-role { font-family: var(--font-type); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--red); margin-bottom: 12px; }
+.tc-bio { font-size: 13px; font-weight: 300; color: rgba(26,18,8,0.55); line-height: 1.65; }
+
+/* VALUES */
+.values-sec { background: var(--ink); padding: 7rem 0; position: relative; overflow: hidden; }
+.values-sec::before { content: 'PROPS'; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); font-family: var(--font-title); font-size: 260px; color: rgba(240,232,213,0.02); letter-spacing: -8px; pointer-events: none; }
+.values-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: rgba(240,232,213,0.06); margin-top: 4rem; }
+.val-card { background: rgba(240,232,213,0.02); padding: 2.5rem 2rem; border-bottom: 3px solid transparent; transition: var(--ease); }
+.val-card:hover { background: rgba(240,232,213,0.04); border-bottom-color: var(--red); }
+.val-num { font-family: var(--font-title); font-size: 52px; color: rgba(240,232,213,0.06); margin-bottom: -8px; line-height: 1; }
+.val-title { font-family: var(--font-body); font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--parchment); margin-bottom: 10px; }
+.val-desc { font-size: 13px; font-weight: 300; color: rgba(240,232,213,0.45); line-height: 1.7; }
+
+/* CTA */
+.cta-sec { background: var(--parchment); padding: 6rem 0; text-align: center; }
+.cta-sec h2 { font-size: clamp(42px, 6vw, 80px); margin-bottom: 1rem; }
+.cta-sec p { font-size: 15px; font-weight: 300; color: rgba(26,18,8,0.55); margin-bottom: 2.5rem; letter-spacing: 0.03em; }
+.btn-red { background: var(--red); color: var(--parchment); font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 14px 34px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; border: 2px solid var(--red); transition: var(--ease); }
+.btn-red:hover { background: transparent; color: var(--red); }
+.btn-outline { background: transparent; color: var(--ink); font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; padding: 14px 34px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; border: 1px solid rgba(26,18,8,0.25); transition: var(--ease); }
+.btn-outline:hover { border-color: var(--ink); }
+
+footer { background: var(--deep); border-top: 3px solid var(--red); padding: 2.5rem; }
+.footer-bottom { max-width: 1320px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.f-copy { font-family: var(--font-type); font-size: 11px; color: rgba(240,232,213,0.2); letter-spacing: 0.1em; }
+.f-links { display: flex; gap: 2rem; }
+.f-links a { color: rgba(240,232,213,0.35); text-decoration: none; font-family: var(--font-type); font-size: 11px; letter-spacing: 0.1em; transition: color var(--ease); }
+.f-links a:hover { color: var(--parchment); }
+
+@media (max-width: 900px) { .story-layout { grid-template-columns: 1fr; gap: 3rem; } .team-grid { grid-template-columns: 1fr 1fr; } .values-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .team-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="index.html">
+      <div class="logo-clapper"><div class="clapper-stripes"></div><div class="clapper-body"><span>KTP</span></div></div>
+      <div><span class="logo-name-main">Kentucky Top Props</span><span class="logo-name-sub">Est. Lexington, KY</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html" class="active">About</a>
+      <div class="has-dd">
+        <a href="products.html">Products</a>
+        <div class="dd">
+          <a href="products.html#automotive">🚗 Automotive</a>
+          <a href="products.html#furniture">🪑 Furniture</a>
+          <a href="products.html#lighting">💡 Lighting</a>
+          <a href="products.html#vintage">📻 Vintage</a>
+        </div>
+      </div>
+      <a href="contact.html">Contact</a>
+      <a class="nav-quote" href="contact.html">Request Quote</a>
+    </div>
+    <button class="hamburger" onclick="document.getElementById('mobMenu').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mob-menu" id="mobMenu">
+  <div class="mob-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="products.html">Products</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</div>
+
+<div class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-filmstrip" id="filmStrip"></div>
+  <div class="page-hero-accent">SINCE<br>1998</div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index.html">Home</a><span>/</span>About</div>
+    <h1>MORE THAN<br>PROPS.<br><em>A LEGACY.</em></h1>
+    <p class="page-hero-desc">Over 25 years of sourcing, curating, and lending the objects that bring stories to life — from Hollywood sets to Lexington living rooms.</p>
+  </div>
+</div>
+
+<!-- STORY -->
+<section class="story-sec">
+  <div class="s-wrap">
+    <div class="story-layout">
+      <div class="story-body">
+        <div class="eyebrow">Our history</div>
+        <h2>BUILT ONE PROP AT A TIME</h2>
+        <p>Kentucky Top Props was founded in Lexington in the late 1990s by a pair of set decorators who were tired of driving to Nashville or Atlanta every time a production needed something extraordinary.</p>
+        <p>Their solution: <strong>build the prop house they wished existed.</strong> What started as a few dozen pieces of period furniture and a couple of vintage vehicles has grown into one of the most comprehensive inventories in the mid-South — over 3,000 items spanning every era and aesthetic.</p>
+        <p>Over the years, we've served <strong>Hallmark Channel productions, regional theater companies, luxury real estate firms</strong>, and couples who wanted a 1965 T-Bird at their wedding. We treat every rental — whether it's a $40 side table or a $3,500 classic car — with the same care.</p>
+        <div class="pull-quote">
+          <blockquote>"We built the prop house we always wished existed. Everything we do starts with that."</blockquote>
+          <cite>— Founders, Kentucky Top Props</cite>
+        </div>
+        <p>We're a small, passionate team based out of Lexington, and we genuinely love what we do. If you're looking for something specific, just ask — if we don't have it, we probably know where to find it.</p>
+      </div>
+      <div>
+        <div class="eyebrow">Timeline</div>
+        <div class="tl">
+          <div class="tl-item">
+            <div class="tl-year"><span>1998</span></div>
+            <div class="tl-content">
+              <div class="tl-title">Founded in Lexington, KY</div>
+              <div class="tl-desc">Started with 200 items and a single cargo van. Two set decorators with a big idea.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year"><span>2003</span></div>
+            <div class="tl-content">
+              <div class="tl-title">First Major Film Contract</div>
+              <div class="tl-desc">Supplied full set decoration for a regional feature film — our first big production credit.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year"><span>2010</span></div>
+            <div class="tl-content">
+              <div class="tl-title">New 10,000 sq ft Warehouse</div>
+              <div class="tl-desc">Moved to a dedicated facility to handle growing inventory and logistics operations.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year"><span>2016</span></div>
+            <div class="tl-content">
+              <div class="tl-title">Home Staging Division Launched</div>
+              <div class="tl-desc">Partnered with Lexington-area real estate brokerages for professional staging packages.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-year"><span>2023</span></div>
+            <div class="tl-content">
+              <div class="tl-title">3,000+ Items in Inventory</div>
+              <div class="tl-desc">Reached a major milestone — now one of the largest independent prop houses in Kentucky.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAND -->
+<div class="stats-band">
+  <div class="stats-grid">
+    <div class="stat-item"><span class="stat-n">25+</span><div class="stat-l">Years in business</div></div>
+    <div class="stat-item"><span class="stat-n">3,000+</span><div class="stat-l">Items in inventory</div></div>
+    <div class="stat-item"><span class="stat-n">500+</span><div class="stat-l">Productions served</div></div>
+    <div class="stat-item"><span class="stat-n">8</span><div class="stat-l">Prop categories</div></div>
+  </div>
+</div>
+
+<!-- TEAM -->
+<section class="team-sec">
+  <div class="s-wrap">
+    <div class="eyebrow">The crew</div>
+    <h2>THE PEOPLE BEHIND THE PROPS</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="tc-photo">🧑‍🎨<div class="tc-badge">Founder</div></div>
+        <div class="tc-body">
+          <div class="tc-name">James Harlow</div>
+          <div class="tc-role">Founder & Inventory Director</div>
+          <div class="tc-bio">Former set decorator with 30+ years on regional and national productions. James personally sources and vets every major acquisition.</div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="tc-photo">👩‍💼<div class="tc-badge">Co-Founder</div></div>
+        <div class="tc-body">
+          <div class="tc-name">Linda Harlow</div>
+          <div class="tc-role">Co-Founder & Client Relations</div>
+          <div class="tc-bio">Linda manages relationships with production companies, stagers, and event planners. If you've called us, you've talked to Linda.</div>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="tc-photo">👨‍🔧</div>
+        <div class="tc-body">
+          <div class="tc-name">Marcus Webb</div>
+          <div class="tc-role">Logistics & Delivery</div>
+          <div class="tc-bio">Marcus oversees deliveries, pickups, and on-site setups. He's moved everything from grand pianos to vintage motorcycles without a scratch.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="values-sec">
+  <div class="s-wrap">
+    <div class="eyebrow" style="color:var(--red);">How we work</div>
+    <h2 style="color:var(--parchment);">WHAT WE STAND FOR</h2>
+    <div class="values-grid">
+      <div class="val-card">
+        <div class="val-num">01</div>
+        <div class="val-title">Authenticity first</div>
+        <div class="val-desc">We stock originals. Every piece is catalogued with provenance. If something is a reproduction, we'll tell you upfront — always.</div>
+      </div>
+      <div class="val-card">
+        <div class="val-num">02</div>
+        <div class="val-title">Relationships over transactions</div>
+        <div class="val-desc">Our best clients come back for every production and every listing. We earn that through consistency, honesty, and not wasting anyone's time.</div>
+      </div>
+      <div class="val-card">
+        <div class="val-num">03</div>
+        <div class="val-title">Fast turnaround, no excuses</div>
+        <div class="val-desc">Productions don't wait. We respond to every quote within 24 hours and hit every delivery window. If something goes wrong, we fix it.</div>
+      </div>
+      <div class="val-card">
+        <div class="val-num">04</div>
+        <div class="val-title">Kentucky proud</div>
+        <div class="val-desc">We're a local business and we act like one. We source locally where we can and actively support the creative community here in Kentucky.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-sec">
+  <div class="s-wrap">
+    <div class="eyebrow" style="justify-content:center;">Get in touch</div>
+    <h2>READY TO WORK TOGETHER?</h2>
+    <p>Whether you're planning a shoot, staging a home, or dreaming up a wedding — we'd love to hear from you.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="contact.html" class="btn-red">Contact Us →</a>
+      <a href="products.html" class="btn-outline">Browse Inventory</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom">
+    <div class="f-copy">© 2025 Kentucky Top Props · Lexington, KY</div>
+    <div class="f-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="products.html">Products</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const strip = document.getElementById('filmStrip');
+for (let i = 0; i < 24; i++) { const h = document.createElement('div'); h.className = 'fh'; strip.appendChild(h); }
+</script>
+</body>
+</html>

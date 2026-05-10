@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kentucky Top Props — Premium Prop Rentals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,300;1,600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:       #1a1208;
+  --deep:      #0d0b07;
+  --parchment: #f0e8d5;
+  --aged:      #e8dcc0;
+  --cream:     #faf5ea;
+  --red:       #c0271a;
+  --red-dim:   #8a1a10;
+  --red-muted: rgba(192,39,26,0.15);
+  --tan:       #b89a6a;
+  --tan-dim:   #7a6440;
+  --fade:      rgba(240,232,213,0.55);
+  --rule:      rgba(26,18,8,0.15);
+  --font-title: 'Bebas Neue', 'Arial Black', sans-serif;
+  --font-slab:  'Special Elite', 'Courier New', monospace;
+  --font-body:  'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-type:  'Courier Prime', 'Courier New', monospace;
+  --nav-h: 68px;
+  --ease: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+/* ── GRAIN OVERLAY ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 9999;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav-h); z-index: 1000;
+  background: var(--ink);
+  border-bottom: 3px solid var(--red);
+}
+.nav-inner {
+  max-width: 1320px; width: 100%; margin: 0 auto;
+  padding: 0 2.5rem;
+  height: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+.logo-clapper {
+  width: 44px; height: 38px;
+  background: var(--parchment);
+  border: 2px solid var(--tan);
+  border-radius: 3px;
+  display: flex; flex-direction: column; overflow: hidden;
+  position: relative;
+}
+.clapper-stripes {
+  height: 14px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--ink) 0px, var(--ink) 4px,
+    var(--parchment) 4px, var(--parchment) 8px
+  );
+  border-bottom: 1.5px solid var(--tan);
+}
+.clapper-body { flex: 1; display: flex; align-items: center; justify-content: center; }
+.clapper-body span { font-family: var(--font-title); font-size: 11px; color: var(--ink); letter-spacing: 1px; line-height: 1; }
+.logo-name {
+  display: flex; flex-direction: column;
+}
+.logo-name-main {
+  font-family: var(--font-title);
+  font-size: 22px; letter-spacing: 0.05em;
+  color: var(--parchment); line-height: 1;
+}
+.logo-name-sub {
+  font-family: var(--font-type);
+  font-size: 9px; color: var(--tan);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.nav-links { display: flex; align-items: center; gap: 0; }
+.nav-links a {
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(240,232,213,0.65);
+  text-decoration: none;
+  padding: 8px 16px;
+  position: relative;
+  transition: color var(--ease);
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: 0; left: 16px; right: 16px;
+  height: 2px; background: var(--red);
+  transform: scaleX(0); transition: transform var(--ease);
+}
+.nav-links a:hover { color: var(--parchment); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.has-dd { position: relative; }
+.has-dd > a::before { content: '▾'; margin-left: 5px; font-size: 9px; }
+.dd {
+  position: absolute; top: calc(100% + 3px); left: 0;
+  background: var(--ink);
+  border: 1px solid var(--tan-dim);
+  border-top: 2px solid var(--red);
+  min-width: 210px; padding: 6px;
+  opacity: 0; pointer-events: none;
+  transform: translateY(-4px);
+  transition: var(--ease);
+}
+.has-dd:hover .dd { opacity: 1; pointer-events: all; transform: translateY(0); }
+.dd a {
+  display: block; padding: 8px 12px !important;
+  font-size: 12px !important; letter-spacing: 0.1em !important;
+  color: rgba(240,232,213,0.65) !important;
+  border-left: 2px solid transparent;
+  transition: var(--ease) !important;
+  white-space: nowrap;
+}
+.dd a::after { display: none !important; }
+.dd a:hover { color: var(--parchment) !important; background: rgba(192,39,26,0.1); border-left-color: var(--red) !important; }
+
+.nav-search-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(240,232,213,0.07);
+  border: 1px solid rgba(240,232,213,0.15);
+  color: rgba(240,232,213,0.5);
+  font-family: var(--font-type); font-size: 12px;
+  padding: 7px 13px; cursor: pointer;
+  transition: var(--ease);
+}
+.nav-search-btn:hover { background: rgba(240,232,213,0.11); color: var(--parchment); border-color: var(--tan); }
+
+.nav-quote {
+  background: var(--red); color: var(--parchment) !important;
+  font-weight: 700 !important; letter-spacing: 0.15em !important;
+  padding: 9px 18px !important; border: none !important;
+  transition: background var(--ease) !important;
+}
+.nav-quote::after { display: none !important; }
+.nav-quote:hover { background: var(--red-dim) !important; color: var(--parchment) !important; }
+
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+.hamburger span { width: 24px; height: 1.5px; background: var(--parchment); display: block; transition: var(--ease); }
+
+/* ── MOBILE MENU ── */
+.mob-menu {
+  position: fixed; top: var(--nav-h); left: 0; right: 0; bottom: 0;
+  background: var(--ink); z-index: 999;
+  padding: 3rem 2.5rem;
+  transform: translateX(100%); transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  overflow-y: auto;
+  border-top: 3px solid var(--red);
+}
+.mob-menu.open { transform: translateX(0); }
+.mob-links a { display: block; font-family: var(--font-title); font-size: 48px; color: var(--parchment); text-decoration: none; padding: 8px 0; border-bottom: 1px solid rgba(240,232,213,0.08); letter-spacing: 0.04em; transition: color var(--ease), padding-left var(--ease); }
+.mob-links a:hover { color: var(--red); padding-left: 12px; }
+.mob-sub a { font-size: 20px !important; color: rgba(240,232,213,0.5) !important; font-family: var(--font-body) !important; letter-spacing: 0.1em !important; text-transform: uppercase; padding: 6px 0 !important; border-bottom: none !important; }
+
+/* ── SEARCH OVERLAY ── */
+.search-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(13,11,7,0.92);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 130px;
+  opacity: 0; pointer-events: none; transition: opacity var(--ease);
+}
+.search-overlay.open { opacity: 1; pointer-events: all; }
+.search-box {
+  width: 100%; max-width: 620px; margin: 0 1.5rem;
+  background: var(--ink);
+  border: 1px solid var(--tan-dim);
+  border-top: 3px solid var(--red);
+}
+.search-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(240,232,213,0.08);
+}
+.search-row input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: var(--font-type); font-size: 20px; color: var(--parchment);
+  letter-spacing: 0.03em;
+}
+.search-row input::placeholder { color: rgba(240,232,213,0.25); }
+.search-row button { background: none; border: none; cursor: pointer; color: rgba(240,232,213,0.35); font-size: 20px; }
+.search-results { padding: 8px; max-height: 340px; overflow-y: auto; }
+.s-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 12px; cursor: pointer; text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: var(--ease);
+}
+.s-item:hover { background: rgba(192,39,26,0.08); border-left-color: var(--red); }
+.s-icon { font-size: 20px; }
+.s-name { font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--parchment); letter-spacing: 0.04em; text-transform: uppercase; }
+.s-cat { font-family: var(--font-type); font-size: 11px; color: var(--tan); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  padding-top: var(--nav-h);
+  background: var(--deep);
+  position: relative; overflow: hidden;
+  display: flex; align-items: stretch;
+}
+.hero-film-strip {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 48px;
+  background: var(--ink);
+  border-right: 2px solid rgba(240,232,213,0.06);
+  display: flex; flex-direction: column; gap: 0;
+  overflow: hidden;
+}
+.film-hole {
+  width: 28px; height: 22px; margin: 8px auto;
+  background: var(--deep);
+  border: 1.5px solid rgba(240,232,213,0.15);
+  border-radius: 3px; flex-shrink: 0;
+}
+.hero-film-strip-right {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 48px;
+  background: var(--ink);
+  border-left: 2px solid rgba(240,232,213,0.06);
+}
+
+.hero-content {
+  position: relative; z-index: 2;
+  max-width: 1320px; width: 100%; margin: 0 auto;
+  padding: 0 6rem;
+  display: grid; grid-template-columns: 1fr 420px; gap: 4rem; align-items: center;
+  min-height: calc(100vh - var(--nav-h));
+}
+
+.hero-left {}
+.hero-kicker {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 2rem;
+}
+.hero-kicker-line { width: 40px; height: 2px; background: var(--red); }
+.hero-kicker-text {
+  font-family: var(--font-type); font-size: 12px;
+  color: var(--tan); letter-spacing: 0.25em; text-transform: uppercase;
+}
+
+h1 {
+  font-family: var(--font-title);
+  font-size: clamp(72px, 9vw, 130px);
+  line-height: 0.9;
+  color: var(--parchment);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+}
+h1 .red { color: var(--red); }
+h1 .outline {
+  -webkit-text-stroke: 2px var(--parchment);
+  color: transparent;
+}
+
+.hero-tagline {
+  font-family: var(--font-slab);
+  font-size: 18px; font-style: italic;
+  color: var(--tan);
+  margin: 1.5rem 0 2rem;
+  letter-spacing: 0.02em;
+  padding-left: 2px;
+}
+
+.hero-desc {
+  font-size: 16px; font-weight: 300; letter-spacing: 0.03em;
+  color: rgba(240,232,213,0.55);
+  line-height: 1.75;
+  max-width: 460px;
+  margin-bottom: 3rem;
+}
+
+.hero-btns { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.btn-red {
+  background: var(--red); color: var(--parchment);
+  font-family: var(--font-body); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 14px 32px; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 2px solid var(--red);
+  transition: var(--ease);
+}
+.btn-red:hover { background: transparent; color: var(--red); }
+.btn-ghost {
+  background: transparent; color: var(--parchment);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 14px 32px; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 1px solid rgba(240,232,213,0.25);
+  transition: var(--ease);
+}
+.btn-ghost:hover { border-color: var(--tan); color: var(--tan); }
+
+.hero-counters {
+  display: flex; gap: 3rem;
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(240,232,213,0.1);
+}
+.counter-num {
+  font-family: var(--font-title);
+  font-size: 52px; line-height: 1; color: var(--red);
+  display: block;
+}
+.counter-label {
+  font-family: var(--font-type); font-size: 10px;
+  color: rgba(240,232,213,0.35);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* hero right — prop reel */
+.hero-reel {
+  display: flex; flex-direction: column; gap: 12px;
+  position: relative;
+}
+.reel-card {
+  background: rgba(240,232,213,0.04);
+  border: 1px solid rgba(240,232,213,0.1);
+  border-left: 3px solid var(--red);
+  padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; gap: 1.25rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--ease);
+  position: relative; overflow: hidden;
+}
+.reel-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(192,39,26,0.05);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform var(--ease);
+}
+.reel-card:hover { border-left-color: var(--tan); transform: translateX(4px); }
+.reel-card:hover::before { transform: scaleX(1); }
+.reel-icon { font-size: 30px; flex-shrink: 0; }
+.reel-info { flex: 1; }
+.reel-name { font-family: var(--font-body); font-size: 15px; font-weight: 700; color: var(--parchment); letter-spacing: 0.06em; text-transform: uppercase; }
+.reel-meta { font-family: var(--font-type); font-size: 11px; color: var(--tan); margin-top: 3px; letter-spacing: 0.08em; }
+.reel-price { font-family: var(--font-title); font-size: 22px; color: var(--red); flex-shrink: 0; }
+
+.reel-frame-num {
+  position: absolute; top: 8px; right: 10px;
+  font-family: var(--font-type); font-size: 9px;
+  color: rgba(240,232,213,0.2); letter-spacing: 0.1em;
+}
+
+/* ── TICKER ── */
+.ticker {
+  background: var(--red);
+  overflow: hidden; height: 38px;
+  display: flex; align-items: center;
+  position: relative;
+}
+.ticker::before, .ticker::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 1;
+}
+.ticker-track {
+  display: flex; animation: ticker 35s linear infinite; white-space: nowrap;
+}
+.ticker-item {
+  font-family: var(--font-body); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--parchment);
+  padding: 0 2rem; display: flex; align-items: center; gap: 1rem; opacity: 0.9;
+}
+.ticker-item::after { content: '◆'; font-size: 6px; opacity: 0.6; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── SECTION COMMON ── */
+.s-wrap { max-width: 1320px; margin: 0 auto; padding: 0 2.5rem; }
+.section-head { margin-bottom: 3.5rem; }
+.eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-type); font-size: 11px;
+  color: var(--red); letter-spacing: 0.25em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.eyebrow::before { content: ''; width: 28px; height: 1.5px; background: var(--red); }
+h2 {
+  font-family: var(--font-title);
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 0.92; letter-spacing: 0.02em;
+  color: var(--ink);
+}
+.sub-text {
+  font-size: 15px; font-weight: 300; letter-spacing: 0.03em;
+  color: rgba(26,18,8,0.55); line-height: 1.75;
+  max-width: 500px; margin-top: 1rem;
+}
+.section-rule {
+  width: 100%; height: 1px;
+  background: var(--rule);
+  margin: 0;
+}
+
+/* ── CATEGORIES SECTION ── */
+.cats-sec { background: var(--parchment); padding: 6rem 0; }
+.cats-sec h2 { color: var(--ink); }
+.cat-search-row {
+  display: flex; gap: 0; margin: 2.5rem 0 3rem;
+  border: 1.5px solid rgba(26,18,8,0.2);
+  background: white;
+}
+.cat-search-row input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: var(--font-type); font-size: 15px;
+  color: var(--ink); padding: 14px 18px;
+  letter-spacing: 0.03em;
+}
+.cat-search-row input::placeholder { color: rgba(26,18,8,0.3); }
+.cat-search-row button {
+  background: var(--red); color: var(--parchment);
+  border: none; padding: 0 24px;
+  font-family: var(--font-body); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; transition: background var(--ease);
+}
+.cat-search-row button:hover { background: var(--red-dim); }
+
+.cat-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1.5px solid rgba(26,18,8,0.15);
+}
+.cat-tile {
+  padding: 2rem 1.75rem;
+  border-right: 1px solid rgba(26,18,8,0.1);
+  border-bottom: 1px solid rgba(26,18,8,0.1);
+  cursor: pointer; text-decoration: none;
+  display: block; position: relative; overflow: hidden;
+  transition: background var(--ease);
+  background: white;
+}
+.cat-tile:nth-child(4n) { border-right: none; }
+.cat-tile:nth-child(n+5) { border-bottom: none; }
+.cat-tile::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px; background: var(--red);
+  transform: scaleX(0); transition: transform var(--ease);
+}
+.cat-tile:hover { background: var(--cream); }
+.cat-tile:hover::after { transform: scaleX(1); }
+.cat-tile:hover .ct-num { color: var(--red); }
+.ct-icon { font-size: 28px; margin-bottom: 12px; display: block; }
+.ct-name {
+  font-family: var(--font-body); font-size: 14px; font-weight: 700;
+  color: var(--ink); letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.ct-num {
+  font-family: var(--font-type); font-size: 11px;
+  color: var(--tan-dim); letter-spacing: 0.1em;
+  transition: color var(--ease);
+}
+
+/* ── FEATURED PROPS ── */
+.featured-sec { background: var(--cream); padding: 6rem 0; }
+.feat-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 3rem; }
+.view-all-link {
+  font-family: var(--font-type); font-size: 12px;
+  color: var(--red); text-decoration: none; letter-spacing: 0.15em;
+  text-transform: uppercase; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--red); padding-bottom: 2px;
+  transition: gap var(--ease);
+}
+.view-all-link:hover { gap: 14px; }
+
+.props-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px; background: rgba(26,18,8,0.1); }
+.prop-card {
+  background: white; text-decoration: none; color: inherit;
+  display: block; overflow: hidden;
+  position: relative;
+  transition: var(--ease);
+}
+.prop-card:hover { z-index: 2; }
+.prop-card:hover .pc-img-inner { transform: scale(1.04); }
+.pc-img {
+  aspect-ratio: 4/3;
+  background: var(--ink);
+  overflow: hidden;
+  position: relative; display: flex; align-items: center; justify-content: center;
+}
+.pc-img-inner { font-size: 52px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+.pc-badge {
+  position: absolute; top: 0; left: 0;
+  background: var(--red); color: var(--parchment);
+  font-family: var(--font-type); font-size: 9px; letter-spacing: 0.15em;
+  text-transform: uppercase; padding: 4px 10px;
+}
+.pc-frame {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 0 10px 8px;
+  font-family: var(--font-type); font-size: 9px; letter-spacing: 0.15em;
+  color: rgba(240,232,213,0.25);
+  display: flex; justify-content: space-between;
+}
+.pc-body { padding: 1.25rem 1.5rem; border-top: 3px solid var(--parchment); }
+.prop-card:hover .pc-body { border-top-color: var(--red); }
+.pc-cat { font-family: var(--font-type); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--tan-dim); margin-bottom: 6px; }
+.pc-name { font-family: var(--font-body); font-size: 17px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; line-height: 1.2; }
+.pc-desc { font-size: 13px; font-weight: 300; color: rgba(26,18,8,0.55); line-height: 1.6; margin-bottom: 14px; }
+.pc-footer { display: flex; align-items: center; justify-content: space-between; }
+.pc-price { font-family: var(--font-title); font-size: 26px; color: var(--ink); }
+.pc-price sup { font-size: 14px; font-family: var(--font-body); vertical-align: super; }
+.pc-price sub { font-size: 11px; font-family: var(--font-type); color: var(--tan-dim); }
+.pc-btn {
+  font-family: var(--font-type); font-size: 11px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--red);
+  background: none; border: 1px solid var(--red);
+  padding: 6px 14px; cursor: pointer;
+  transition: var(--ease);
+}
+.pc-btn:hover { background: var(--red); color: var(--parchment); }
+
+/* ── WHO WE SERVE ── */
+.serve-sec { background: var(--ink); padding: 7rem 0; position: relative; overflow: hidden; }
+.serve-sec::before {
+  content: 'SCENE';
+  position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-title); font-size: 280px; line-height: 1;
+  color: rgba(240,232,213,0.025); letter-spacing: -10px; pointer-events: none;
+}
+.serve-sec h2 { color: var(--parchment); }
+.serve-sec .sub-text { color: rgba(240,232,213,0.4); }
+.serve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(240,232,213,0.07); margin-top: 4rem; }
+.serve-card {
+  background: rgba(240,232,213,0.02); padding: 2.5rem 2rem;
+  border-bottom: 3px solid transparent;
+  transition: var(--ease);
+}
+.serve-card:hover { background: rgba(240,232,213,0.05); border-bottom-color: var(--red); }
+.sv-num {
+  font-family: var(--font-title); font-size: 64px; line-height: 1;
+  color: rgba(240,232,213,0.06); margin-bottom: -10px;
+}
+.sv-title {
+  font-family: var(--font-body); font-size: 16px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--parchment); margin-bottom: 10px;
+}
+.sv-desc { font-size: 13px; font-weight: 300; color: rgba(240,232,213,0.45); line-height: 1.7; }
+.sv-tag {
+  display: inline-block; margin-top: 16px;
+  font-family: var(--font-type); font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--red);
+  border-bottom: 1px solid rgba(192,39,26,0.4); padding-bottom: 1px;
+}
+
+/* ── ABOUT STRIP ── */
+.about-strip { background: var(--parchment); padding: 7rem 0; position: relative; }
+.about-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+.about-text h2 { font-size: clamp(36px, 4.5vw, 60px); }
+.about-text .sub-text { margin-bottom: 2.5rem; }
+.about-pillars { display: flex; flex-direction: column; gap: 0; margin-bottom: 2.5rem; }
+.pillar { display: flex; align-items: flex-start; gap: 16px; padding: 1.25rem 0; border-bottom: 1px solid rgba(26,18,8,0.1); }
+.pillar:first-child { border-top: 1px solid rgba(26,18,8,0.1); }
+.pillar-num { font-family: var(--font-title); font-size: 36px; color: var(--red); line-height: 1; flex-shrink: 0; width: 42px; }
+.pillar-body {}
+.pillar-title { font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); margin-bottom: 4px; }
+.pillar-desc { font-size: 13px; font-weight: 300; color: rgba(26,18,8,0.55); line-height: 1.6; }
+.about-visual {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+  background: rgba(26,18,8,0.1);
+}
+.av-stat {
+  background: var(--cream); padding: 2rem 1.75rem;
+  text-align: center;
+}
+.av-stat:first-child { grid-column: span 2; background: var(--aged); }
+.av-num { font-family: var(--font-title); font-size: 52px; color: var(--red); line-height: 1; display: block; }
+.av-label { font-family: var(--font-type); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--tan-dim); margin-top: 4px; }
+
+/* ── HOW IT WORKS ── */
+.how-sec { background: var(--cream); padding: 6rem 0; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 4rem; border: 1.5px solid rgba(26,18,8,0.12); }
+.step { padding: 2.5rem 2rem; border-right: 1px solid rgba(26,18,8,0.1); position: relative; }
+.step:last-child { border-right: none; }
+.step-n {
+  font-family: var(--font-title); font-size: 72px; line-height: 1;
+  color: rgba(26,18,8,0.06); margin-bottom: -12px;
+}
+.step-title { font-family: var(--font-body); font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
+.step-desc { font-size: 13px; font-weight: 300; color: rgba(26,18,8,0.5); line-height: 1.65; }
+.step-connector { position: absolute; right: -14px; top: 2.5rem; font-family: var(--font-title); font-size: 20px; color: var(--red); z-index: 2; }
+
+/* ── TESTIMONIALS ── */
+.testi-sec { background: var(--parchment); padding: 6rem 0; }
+.testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: rgba(26,18,8,0.1); margin-top: 3.5rem; }
+.testi-card { background: white; padding: 2rem; }
+.testi-stars { color: var(--red); font-size: 13px; letter-spacing: 3px; margin-bottom: 1.25rem; }
+.testi-quote { font-family: var(--font-slab); font-size: 14px; line-height: 1.75; color: var(--ink); margin-bottom: 1.5rem; font-style: italic; }
+.testi-author { display: flex; align-items: center; gap: 10px; padding-top: 1rem; border-top: 1px solid rgba(26,18,8,0.08); }
+.testi-av { width: 38px; height: 38px; background: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-size: 14px; color: var(--red); flex-shrink: 0; }
+.testi-name { font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+.testi-role { font-family: var(--font-type); font-size: 10px; color: var(--tan-dim); letter-spacing: 0.08em; }
+
+/* ── CTA BAND ── */
+.cta-band { background: var(--red); padding: 5rem 0; text-align: center; position: relative; overflow: hidden; }
+.cta-band::before {
+  content: 'ACTION';
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  font-family: var(--font-title); font-size: 260px; line-height: 1;
+  color: rgba(0,0,0,0.08); letter-spacing: 0.05em; pointer-events: none; white-space: nowrap;
+}
+.cta-band h2 { font-family: var(--font-title); font-size: clamp(44px, 6vw, 80px); color: var(--parchment); line-height: 0.92; margin-bottom: 1rem; position: relative; z-index: 1; }
+.cta-band p { font-size: 16px; font-weight: 300; color: rgba(240,232,213,0.7); margin-bottom: 2.5rem; position: relative; z-index: 1; letter-spacing: 0.03em; }
+.cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+.btn-cream { background: var(--parchment); color: var(--red); font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 15px 36px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; border: 2px solid var(--parchment); transition: var(--ease); }
+.btn-cream:hover { background: transparent; color: var(--parchment); }
+.btn-ghost-light { background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; padding: 15px 36px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; border: 1px solid rgba(240,232,213,0.4); transition: var(--ease); }
+.btn-ghost-light:hover { border-color: var(--parchment); }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--deep);
+  border-top: 3px solid var(--red);
+  padding: 4rem 0 2rem;
+}
+.footer-grid {
+  max-width: 1320px; margin: 0 auto; padding: 0 2.5rem;
+  display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr;
+  gap: 3rem; padding-bottom: 3rem;
+  border-bottom: 1px solid rgba(240,232,213,0.06);
+}
+.footer-brand-desc { font-size: 13px; font-weight: 300; color: rgba(240,232,213,0.35); line-height: 1.75; margin-top: 1.25rem; margin-bottom: 1.5rem; max-width: 320px; letter-spacing: 0.02em; }
+.footer-col h4 { font-family: var(--font-type); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 1.25rem; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col a { color: rgba(240,232,213,0.4); text-decoration: none; font-size: 13px; font-weight: 300; transition: color var(--ease); letter-spacing: 0.03em; }
+.footer-col a:hover { color: var(--parchment); }
+.footer-bottom-bar { max-width: 1320px; margin: 1.5rem auto 0; padding: 0 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.f-copy { font-family: var(--font-type); font-size: 11px; color: rgba(240,232,213,0.2); letter-spacing: 0.1em; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .hero-content { padding: 0 4rem; grid-template-columns: 1fr; }
+  .hero-reel { display: none; }
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .serve-grid { grid-template-columns: 1fr 1fr; }
+  .about-layout { grid-template-columns: 1fr; gap: 3rem; }
+  .steps { grid-template-columns: 1fr 1fr; }
+  .testi-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 780px) {
+  .nav-links, .nav-search-btn { display: none; }
+  .hamburger { display: flex; }
+  .hero-content { padding: 0 2rem; }
+  .hero-film-strip, .hero-film-strip-right { display: none; }
+  .cat-grid { grid-template-columns: 1fr 1fr; }
+  .serve-grid { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+  .testi-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .hero-counters { gap: 2rem; flex-wrap: wrap; }
+}
+@media (max-width: 500px) {
+  .cat-grid { grid-template-columns: 1fr; }
+  .props-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="index.html">
+      <div class="logo-clapper">
+        <div class="clapper-stripes"></div>
+        <div class="clapper-body"><span>KTP</span></div>
+      </div>
+      <div class="logo-name">
+        <span class="logo-name-main">Kentucky Top Props</span>
+        <span class="logo-name-sub">Est. Lexington, KY — Prop Rentals</span>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <div class="has-dd">
+        <a href="products.html">Products</a>
+        <div class="dd">
+          <a href="products.html#automotive">🚗  Automotive</a>
+          <a href="products.html#furniture">🪑  Furniture</a>
+          <a href="products.html#lighting">💡  Lighting</a>
+          <a href="products.html#wardrobe">👗  Wardrobe & Costumes</a>
+          <a href="products.html#vintage">📻  Vintage & Antiques</a>
+          <a href="products.html#industrial">⚙️  Industrial</a>
+          <a href="products.html#decor">🏺  Décor & Staging</a>
+          <a href="products.html#signage">🪧  Signage & Neon</a>
+        </div>
+      </div>
+      <div class="has-dd">
+        <a href="#">Services</a>
+        <div class="dd">
+          <a href="#">🎬  Film & TV</a>
+          <a href="#">💍  Weddings & Events</a>
+          <a href="#">🏠  Home Staging</a>
+          <a href="#">📸  Photo Shoots</a>
+          <a href="#">🎭  Theater</a>
+          <a href="#">🏢  Corporate</a>
+        </div>
+      </div>
+      <a href="contact.html">Contact</a>
+      <button class="nav-search-btn" onclick="openSearch()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Search &nbsp;<span style="font-size:10px;opacity:0.5;">⌘K</span>
+      </button>
+      <a class="nav-links nav-quote" href="contact.html">Request Quote</a>
+    </div>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mob-menu" id="mobMenu">
+  <div class="mob-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="products.html">Products</a>
+    <div class="mob-sub">
+      <a href="products.html#automotive">🚗 Automotive</a>
+      <a href="products.html#furniture">🪑 Furniture</a>
+      <a href="products.html#lighting">💡 Lighting</a>
+      <a href="products.html#wardrobe">👗 Wardrobe</a>
+      <a href="products.html#vintage">📻 Vintage & Antiques</a>
+      <a href="products.html#industrial">⚙️ Industrial</a>
+    </div>
+    <a href="#">Services</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a class="btn-red" href="contact.html" style="margin-top:2rem;display:inline-flex;">Request a Quote →</a>
+</div>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="closeSearchOuter(event)">
+  <div class="search-box">
+    <div class="search-row">
+      <svg width="18" height="18" fill="none" stroke="rgba(192,39,26,0.8)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="searchInput" placeholder="Search any prop, era, or style…" oninput="doSearch(this.value)" onkeydown="if(event.key==='Escape')closeSearch()" />
+      <button onclick="closeSearch()">✕</button>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-film-strip" id="filmStrip"></div>
+  <div class="hero-film-strip-right" id="filmStripR"></div>
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-kicker">
+        <div class="hero-kicker-line"></div>
+        <span class="hero-kicker-text">Kentucky's Premier Prop House — Since 1998</span>
+      </div>
+      <h1>
+        <span class="red">PROPS</span><br>
+        FOR<br>
+        <span class="outline">EVERY</span><br>
+        SCENE.
+      </h1>
+      <p class="hero-tagline">"If it belongs on a set, we've got it in the warehouse."</p>
+      <p class="hero-desc">Classic cars. Victorian settees. Art Deco chandeliers. Neon signs. We outfit films, weddings, staging shoots, and anything else that needs a perfect object in the right place.</p>
+      <div class="hero-btns">
+        <a href="products.html" class="btn-red">Browse Inventory →</a>
+        <a href="contact.html" class="btn-ghost">Get a Quote</a>
+      </div>
+      <div class="hero-counters">
+        <div><span class="counter-num">3K+</span><span class="counter-label">Props in stock</span></div>
+        <div><span class="counter-num">25+</span><span class="counter-label">Years operating</span></div>
+        <div><span class="counter-num">500+</span><span class="counter-label">Productions served</span></div>
+      </div>
+    </div>
+    <div class="hero-reel">
+      <div style="font-family:var(--font-type);font-size:10px;color:var(--tan);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;opacity:0.6;">— Featured inventory —</div>
+      <a class="reel-card" href="products.html">
+        <span class="reel-frame-num">FR 001</span>
+        <div class="reel-icon">🚗</div>
+        <div class="reel-info">
+          <div class="reel-name">1967 Ford Mustang</div>
+          <div class="reel-meta">Automotive · 1960s</div>
+        </div>
+        <div class="reel-price">$350</div>
+      </a>
+      <a class="reel-card" href="products.html">
+        <span class="reel-frame-num">FR 002</span>
+        <div class="reel-icon">🪑</div>
+        <div class="reel-info">
+          <div class="reel-name">Victorian Parlor Set</div>
+          <div class="reel-meta">Furniture · Victorian</div>
+        </div>
+        <div class="reel-price">$180</div>
+      </a>
+      <a class="reel-card" href="products.html">
+        <span class="reel-frame-num">FR 003</span>
+        <div class="reel-icon">💡</div>
+        <div class="reel-info">
+          <div class="reel-name">Art Deco Chandelier</div>
+          <div class="reel-meta">Lighting · 1930s</div>
+        </div>
+        <div class="reel-price">$220</div>
+      </a>
+      <a class="reel-card" href="products.html">
+        <span class="reel-frame-num">FR 004</span>
+        <div class="reel-icon">📻</div>
+        <div class="reel-info">
+          <div class="reel-name">Crosley Radio Console</div>
+          <div class="reel-meta">Vintage Tech · 1950s</div>
+        </div>
+        <div class="reel-price">$95</div>
+      </a>
+      <a class="reel-card" href="products.html">
+        <span class="reel-frame-num">FR 005</span>
+        <div class="reel-icon">🚘</div>
+        <div class="reel-info">
+          <div class="reel-name">1950 Packard Super Eight</div>
+          <div class="reel-meta">Automotive · 1950s</div>
+        </div>
+        <div class="reel-price">$400</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item">Film & TV Production</span>
+    <span class="ticker-item">Wedding Rentals</span>
+    <span class="ticker-item">Home Staging</span>
+    <span class="ticker-item">Classic Automobiles</span>
+    <span class="ticker-item">Theater Props</span>
+    <span class="ticker-item">Antique Furniture</span>
+    <span class="ticker-item">Vintage Décor</span>
+    <span class="ticker-item">Photo Shoots</span>
+    <span class="ticker-item">Corporate Events</span>
+    <span class="ticker-item">Industrial Props</span>
+    <span class="ticker-item">Film & TV Production</span>
+    <span class="ticker-item">Wedding Rentals</span>
+    <span class="ticker-item">Home Staging</span>
+    <span class="ticker-item">Classic Automobiles</span>
+    <span class="ticker-item">Theater Props</span>
+    <span class="ticker-item">Antique Furniture</span>
+    <span class="ticker-item">Vintage Décor</span>
+    <span class="ticker-item">Photo Shoots</span>
+    <span class="ticker-item">Corporate Events</span>
+    <span class="ticker-item">Industrial Props</span>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<section class="cats-sec">
+  <div class="s-wrap">
+    <div class="section-head">
+      <div class="eyebrow">Browse the inventory</div>
+      <h2>EVERY PROP.<br>EVERY ERA.</h2>
+      <p class="sub-text">3,000+ pieces spanning Victorian to contemporary. If a set decorator or a bride can dream it, we've probably got it.</p>
+    </div>
+    <div class="cat-search-row">
+      <input type="text" placeholder="Search by prop name, era, or aesthetic…" onfocus="openSearch()" readonly />
+      <button onclick="openSearch()">Search</button>
+    </div>
+    <div class="cat-grid">
+      <a class="cat-tile" href="products.html#automotive">
+        <span class="ct-icon">🚗</span>
+        <div class="ct-name">Automotive</div>
+        <div class="ct-num">45+ vehicles</div>
+      </a>
+      <a class="cat-tile" href="products.html#furniture">
+        <span class="ct-icon">🪑</span>
+        <div class="ct-name">Furniture</div>
+        <div class="ct-num">600+ pieces</div>
+      </a>
+      <a class="cat-tile" href="products.html#lighting">
+        <span class="ct-icon">💡</span>
+        <div class="ct-name">Lighting</div>
+        <div class="ct-num">200+ fixtures</div>
+      </a>
+      <a class="cat-tile" href="products.html#wardrobe">
+        <span class="ct-icon">👗</span>
+        <div class="ct-name">Wardrobe</div>
+        <div class="ct-num">800+ items</div>
+      </a>
+      <a class="cat-tile" href="products.html#vintage">
+        <span class="ct-icon">📻</span>
+        <div class="ct-name">Vintage & Antiques</div>
+        <div class="ct-num">400+ pieces</div>
+      </a>
+      <a class="cat-tile" href="products.html#industrial">
+        <span class="ct-icon">⚙️</span>
+        <div class="ct-name">Industrial</div>
+        <div class="ct-num">150+ items</div>
+      </a>
+      <a class="cat-tile" href="products.html#decor">
+        <span class="ct-icon">🏺</span>
+        <div class="ct-name">Décor & Staging</div>
+        <div class="ct-num">500+ pieces</div>
+      </a>
+      <a class="cat-tile" href="products.html#signage">
+        <span class="ct-icon">🪧</span>
+        <div class="ct-name">Signage & Neon</div>
+        <div class="ct-num">120+ signs</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED -->
+<section class="featured-sec">
+  <div class="s-wrap">
+    <div class="feat-header">
+      <div>
+        <div class="eyebrow">Trending right now</div>
+        <h2>ON THE REEL</h2>
+      </div>
+      <a href="products.html" class="view-all-link">View Full Inventory →</a>
+    </div>
+    <div class="props-grid">
+      <a class="prop-card" href="products.html">
+        <div class="pc-img">
+          <div class="pc-img-inner">🚗</div>
+          <div class="pc-badge">Popular</div>
+          <div class="pc-frame"><span>AUTOMOTIVE</span><span>FR–001</span></div>
+        </div>
+        <div class="pc-body">
+          <div class="pc-cat">1960s · Kentucky Top Props</div>
+          <div class="pc-name">1967 Ford Mustang Fastback</div>
+          <div class="pc-desc">Restored cherry red. Perfect for 60s period pieces or statement staging.</div>
+          <div class="pc-footer">
+            <div class="pc-price"><sup>$</sup>350<sub>/day</sub></div>
+            <button class="pc-btn">Inquire</button>
+          </div>
+        </div>
+      </a>
+      <a class="prop-card" href="products.html">
+        <div class="pc-img">
+          <div class="pc-img-inner">🪑</div>
+          <div class="pc-frame"><span>FURNITURE</span><span>FR–002</span></div>
+        </div>
+        <div class="pc-body">
+          <div class="pc-cat">Victorian · Kentucky Top Props</div>
+          <div class="pc-name">Victorian Carved Parlor Set</div>
+          <div class="pc-desc">Original 1880s matched settee and two armchairs, burgundy velvet.</div>
+          <div class="pc-footer">
+            <div class="pc-price"><sup>$</sup>180<sub>/day</sub></div>
+            <button class="pc-btn">Inquire</button>
+          </div>
+        </div>
+      </a>
+      <a class="prop-card" href="products.html">
+        <div class="pc-img">
+          <div class="pc-img-inner">💡</div>
+          <div class="pc-badge">New</div>
+          <div class="pc-frame"><span>LIGHTING</span><span>FR–003</span></div>
+        </div>
+        <div class="pc-body">
+          <div class="pc-cat">1930s · Kentucky Top Props</div>
+          <div class="pc-name">Art Deco Brass Chandelier</div>
+          <div class="pc-desc">Original 12-arm, 48" diameter. Fully wired and operational.</div>
+          <div class="pc-footer">
+            <div class="pc-price"><sup>$</sup>220<sub>/day</sub></div>
+            <button class="pc-btn">Inquire</button>
+          </div>
+        </div>
+      </a>
+      <a class="prop-card" href="products.html">
+        <div class="pc-img">
+          <div class="pc-img-inner">📻</div>
+          <div class="pc-frame"><span>VINTAGE</span><span>FR–004</span></div>
+        </div>
+        <div class="pc-body">
+          <div class="pc-cat">1950s · Kentucky Top Props</div>
+          <div class="pc-name">Crosley Radio Console</div>
+          <div class="pc-desc">Mahogany floor-standing cabinet. Fully operational. Scene-stealer.</div>
+          <div class="pc-footer">
+            <div class="pc-price"><sup>$</sup>95<sub>/day</sub></div>
+            <button class="pc-btn">Inquire</button>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- WHO WE SERVE -->
+<section class="serve-sec">
+  <div class="s-wrap">
+    <div class="section-head">
+      <div class="eyebrow" style="color:var(--red);">Who we serve</div>
+      <h2 style="color:var(--parchment);">EVERY<br>PRODUCTION.<br>EVERY CLIENT.</h2>
+      <p class="sub-text" style="color:rgba(240,232,213,0.45);">Hollywood art director or bride with a specific vision — we've stocked sets for both, and everything in between.</p>
+    </div>
+    <div class="serve-grid">
+      <div class="serve-card">
+        <div class="sv-num">01</div>
+        <div class="sv-title">Film & TV Production</div>
+        <div class="sv-desc">We've stocked major productions. Our team understands period accuracy, continuity, and tight turnarounds.</div>
+        <span class="sv-tag">Production accounts available</span>
+      </div>
+      <div class="serve-card">
+        <div class="sv-num">02</div>
+        <div class="sv-title">Weddings & Events</div>
+        <div class="sv-desc">Vintage cars for the exit, statement furniture for the reception, lighting that sets every mood right.</div>
+        <span class="sv-tag">Weekend & multi-day rates</span>
+      </div>
+      <div class="serve-card">
+        <div class="sv-num">03</div>
+        <div class="sv-title">Home Staging</div>
+        <div class="sv-desc">Real estate firms trust us to furnish spaces that sell faster, at higher prices. We've got the proof.</div>
+        <span class="sv-tag">Flexible staging packages</span>
+      </div>
+      <div class="serve-card">
+        <div class="sv-num">04</div>
+        <div class="sv-title">Photo & Commercial Shoots</div>
+        <div class="sv-desc">Catalog shoots, editorial spreads, and brand campaigns. On schedule and on aesthetic, every time.</div>
+        <span class="sv-tag">Half-day rates available</span>
+      </div>
+      <div class="serve-card">
+        <div class="sv-num">05</div>
+        <div class="sv-title">Theater & Live Events</div>
+        <div class="sv-desc">Kentucky stages have relied on us for decades. We understand the demands of live performance.</div>
+        <span class="sv-tag">Seasonal contracts</span>
+      </div>
+      <div class="serve-card">
+        <div class="sv-num">06</div>
+        <div class="sv-title">Corporate & Trade Shows</div>
+        <div class="sv-desc">Brand activations, pop-ups, and trade show booths that command attention and start conversations.</div>
+        <span class="sv-tag">Custom sourcing available</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT STRIP -->
+<section class="about-strip">
+  <div class="s-wrap">
+    <div class="about-layout">
+      <div class="about-text">
+        <div class="eyebrow">Our story</div>
+        <h2>BUILT ONE PROP AT A TIME</h2>
+        <p class="sub-text">Founded in Lexington in the late 1990s by a pair of set decorators who were tired of driving to Nashville to find something good.</p>
+        <div class="about-pillars">
+          <div class="pillar">
+            <div class="pillar-num">01</div>
+            <div class="pillar-body">
+              <div class="pillar-title">Authentic inventory</div>
+              <div class="pillar-desc">Every piece is sourced and catalogued with provenance. No reproductions unless you ask.</div>
+            </div>
+          </div>
+          <div class="pillar">
+            <div class="pillar-num">02</div>
+            <div class="pillar-body">
+              <div class="pillar-title">Expert guidance</div>
+              <div class="pillar-desc">We've worked on sets, in real estate, and at event venues. We know what works and what doesn't.</div>
+            </div>
+          </div>
+          <div class="pillar">
+            <div class="pillar-num">03</div>
+            <div class="pillar-body">
+              <div class="pillar-title">Flexible logistics</div>
+              <div class="pillar-desc">Delivery, pickup, on-site setup, and extended rentals. We make the whole thing easy.</div>
+            </div>
+          </div>
+        </div>
+        <a href="about.html" class="btn-red">Read Our Story →</a>
+      </div>
+      <div class="about-visual">
+        <div class="av-stat">
+          <span class="av-num">25+</span>
+          <div class="av-label">Years in Lexington, KY</div>
+        </div>
+        <div class="av-stat">
+          <span class="av-num">3,000+</span>
+          <div class="av-label">Items in inventory</div>
+        </div>
+        <div class="av-stat">
+          <span class="av-num">500+</span>
+          <div class="av-label">Productions served</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-sec">
+  <div class="s-wrap">
+    <div class="eyebrow">The process</div>
+    <h2>FOUR STEPS TO THE PERFECT PROP</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-title">Browse or Search</div>
+        <div class="step-desc">Explore our full inventory online. Filter by era, category, or style.</div>
+        <div class="step-connector">→</div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-title">Request a Quote</div>
+        <div class="step-desc">Tell us what you need, your dates, your location. Response within 24 hours.</div>
+        <div class="step-connector">→</div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-title">Reserve & Confirm</div>
+        <div class="step-desc">We'll send a contract, confirm availability, and lock in your items.</div>
+        <div class="step-connector">→</div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-title">Deliver or Pick Up</div>
+        <div class="step-desc">We deliver or you pick up from our warehouse. Setup available on request.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testi-sec">
+  <div class="s-wrap">
+    <div class="eyebrow">What people say</div>
+    <h2>TRUSTED BY<br>CREATIVES & PLANNERS</h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-quote">"We needed a vintage diner set for a Hallmark film on a 3-day timeline. Kentucky Top Props had everything — and then some. Absolute lifesavers."</div>
+        <div class="testi-author">
+          <div class="testi-av">JM</div>
+          <div>
+            <div class="testi-name">Jessica M.</div>
+            <div class="testi-role">Production Designer · Hallmark Channel</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-quote">"The antique furniture made our listing photos look like Architectural Digest. It sold in 4 days, above asking."</div>
+        <div class="testi-author">
+          <div class="testi-av">RK</div>
+          <div>
+            <div class="testi-name">Robert K.</div>
+            <div class="testi-role">Realtor · Lexington, KY</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-quote">"That 1965 Thunderbird convertible parked outside our venue was worth every penny. Every single guest took a photo with it."</div>
+        <div class="testi-author">
+          <div class="testi-av">SL</div>
+          <div>
+            <div class="testi-name">Sarah L.</div>
+            <div class="testi-role">Bride · Keeneland, KY</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<div class="cta-band">
+  <h2>LIGHTS.<br>CAMERA.<br>CALL US.</h2>
+  <p>Have a project in mind? Tell us what you're looking for and we'll build you a custom quote within 24 hours.</p>
+  <div class="cta-btns">
+    <a href="contact.html" class="btn-cream">Request a Quote →</a>
+    <a href="products.html" class="btn-ghost-light">Browse Inventory</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <a class="logo" href="index.html" style="display:inline-flex;">
+        <div class="logo-clapper" style="flex-shrink:0;"><div class="clapper-stripes"></div><div class="clapper-body"><span>KTP</span></div></div>
+        <div class="logo-name"><span class="logo-name-main">Kentucky Top Props</span><span class="logo-name-sub">Est. Lexington, KY</span></div>
+      </a>
+      <p class="footer-brand-desc">Premium prop rentals for film, TV, weddings, home staging, and events. Serving Kentucky and the surrounding region for over 25 years.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Products</h4>
+      <ul>
+        <li><a href="products.html#automotive">Automotive</a></li>
+        <li><a href="products.html#furniture">Furniture</a></li>
+        <li><a href="products.html#lighting">Lighting</a></li>
+        <li><a href="products.html#wardrobe">Wardrobe</a></li>
+        <li><a href="products.html#vintage">Vintage & Antiques</a></li>
+        <li><a href="products.html#industrial">Industrial</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#">Film & TV</a></li>
+        <li><a href="#">Home Staging</a></li>
+        <li><a href="#">Weddings & Events</a></li>
+        <li><a href="#">Photo Shoots</a></li>
+        <li><a href="#">Theater</a></li>
+        <li><a href="#">Corporate</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="contact.html">Request a Quote</a></li>
+        <li><a href="#">Rental Policy</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+      <div style="margin-top:2rem;">
+        <div style="font-family:var(--font-type);font-size:10px;color:var(--red);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px;">Location</div>
+        <div style="font-size:13px;font-weight:300;color:rgba(240,232,236,0.35);line-height:1.7;">Lexington, Kentucky<br>Regional delivery available</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom-bar">
+    <div class="f-copy">© 2025 Kentucky Top Props — All rights reserved.</div>
+    <div class="f-copy">(859) 000-0000 · hello@kentuckytopprops.com</div>
+  </div>
+</footer>
+
+<script>
+function toggleMenu() {
+  document.getElementById('mobMenu').classList.toggle('open');
+}
+
+// Film strip holes
+const strip = document.getElementById('filmStrip');
+const stripR = document.getElementById('filmStripR');
+for (let i = 0; i < 40; i++) {
+  [strip, stripR].forEach(s => { const h = document.createElement('div'); h.className = 'film-hole'; s.appendChild(h); });
+}
+
+// Search
+const searchData = [
+  { name: '1967 Ford Mustang Fastback', cat: 'Automotive', icon: '🚗' },
+  { name: '1965 Thunderbird Convertible', cat: 'Automotive', icon: '🚗' },
+  { name: '1950 Packard Super Eight', cat: 'Automotive', icon: '🚘' },
+  { name: '1948 Chevy Fleetline', cat: 'Automotive', icon: '🚗' },
+  { name: 'Victorian Carved Parlor Set', cat: 'Furniture', icon: '🪑' },
+  { name: 'Mid-Century Chesterfield Sofa', cat: 'Furniture', icon: '🛋️' },
+  { name: 'Art Deco Writing Desk', cat: 'Furniture', icon: '🪑' },
+  { name: 'Art Deco Brass Chandelier', cat: 'Lighting', icon: '💡' },
+  { name: 'Industrial Cage Pendant Set', cat: 'Lighting', icon: '🔦' },
+  { name: 'Atomic Table Lamp 1950s', cat: 'Lighting', icon: '🪔' },
+  { name: 'Crosley Radio Console', cat: 'Vintage Tech', icon: '📻' },
+  { name: '1940s Telephone Collection', cat: 'Vintage', icon: '📞' },
+  { name: 'Antique Cash Register', cat: 'Vintage', icon: '🏧' },
+  { name: 'WWII Military Dress Uniforms', cat: 'Wardrobe', icon: '👔' },
+  { name: 'Victorian Ball Gowns', cat: 'Wardrobe', icon: '👗' },
+  { name: 'Neon Bar Sign — Open', cat: 'Signage', icon: '🪧' },
+  { name: '1950s Diner Menu Board', cat: 'Signage', icon: '🪧' },
+  { name: 'Industrial Factory Cart', cat: 'Industrial', icon: '⚙️' },
+];
+
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('searchInput').focus(), 80);
+  doSearch('');
+}
+function closeSearch() { document.getElementById('searchOverlay').classList.remove('open'); }
+function closeSearchOuter(e) { if (e.target === document.getElementById('searchOverlay')) closeSearch(); }
+
+function doSearch(q) {
+  const el = document.getElementById('searchResults');
+  const r = q.length < 1
+    ? searchData
+    : searchData.filter(p => p.name.toLowerCase().includes(q.toLowerCase()) || p.cat.toLowerCase().includes(q.toLowerCase()));
+  if (!r.length) { el.innerHTML = '<div style="padding:24px;text-align:center;font-family:var(--font-type);font-size:13px;color:rgba(240,232,213,0.3);letter-spacing:0.1em;">No results found</div>'; return; }
+  el.innerHTML = r.map(p => `
+    <a class="s-item" href="products.html">
+      <span class="s-icon">${p.icon}</span>
+      <div>
+        <div class="s-name">${p.name}</div>
+        <div class="s-cat">${p.cat}</div>
+      </div>
+    </a>`).join('');
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+  if (e.key === 'Escape') closeSearch();
+});
+</script>
+</body>
+</html>
