@@ -2902,17 +2902,54 @@
         targetEl.innerHTML = "<div class=\"s-item\"><div><div class=\"s-name\">No results found</div></div></div>";
         return;
       }
-      targetEl.innerHTML = results.slice(0, 18)
+      targetEl.innerHTML = results.slice(0, 24)
         .map((item) => `
-          <a class="s-item" href="${item.url}">
-            <span class="s-icon">+</span>
+          <a class="s-item" href="${escHtml(item.url)}">
+            <span class="s-icon">${item.type === "product" ? "◆" : "+"}</span>
             <div>
-              <div class="s-name">${item.label}</div>
-              <div class="s-cat">${item.section}</div>
+              <div class="s-name">${escHtml(item.label)}</div>
+              <div class="s-cat">${escHtml(item.subtitle || item.section || "")}</div>
             </div>
           </a>
         `)
         .join("");
+    }
+
+    async function fetchAllProductsForSearch() {
+      const all = [];
+      const limit = 100;
+      let offset = 0;
+      let total = null;
+      const maxItems = 500;
+      while (all.length < maxItems) {
+        const payload = await fetchPublicProductsList({ limit, offset });
+        const batch = Array.isArray(payload?.items) ? payload.items : [];
+        if (total === null) total = payload?.total ?? batch.length;
+        all.push(...batch);
+        if (!batch.length || all.length >= total) break;
+        offset += batch.length;
+        if (batch.length < limit) break;
+      }
+      return all;
+    }
+
+    function productToSearchEntry(product) {
+      const name = product?.name || "Untitled product";
+      const slug = product?.slug;
+      const cat = product?.category?.name || "";
+      const price = getProductPrice(product);
+      const priceLabel = price !== null ? `$${Math.round(price)}/day` : "";
+      const desc = String(product?.shortDescription || product?.description || "").replace(/<[^>]+>/g, " ").trim();
+      const subtitle = [cat, priceLabel].filter(Boolean).join(" · ");
+      const keywords = [name, cat, product?.sku, desc].filter(Boolean).join(" ").toLowerCase();
+      return {
+        type: "product",
+        label: name,
+        url: slug ? `/products/p/${encodeURIComponent(slug)}` : "/products",
+        section: "Products",
+        subtitle,
+        keywords,
+      };
     }
 
     let searchIndexCache = [];
@@ -2933,16 +2970,11 @@
       } catch (_) {}
 
       try {
-        await ensureProductsLoaded();
-        flattenForSearch(productsCatalogCache, "Products", items);
-        const params = getTenantQueryParams();
-        const prodRes = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}&limit=200`);
-        if (prodRes.ok) {
-          const data = await prodRes.json();
-          const prods = data?.items || [];
-          prods.forEach((p) => items.push({ label: p.name, url: p.slug ? `/products/p/${p.slug}` : `/products`, section: "Products" }));
-        }
-      } catch (_) {}
+        const prods = await fetchAllProductsForSearch();
+        prods.forEach((p) => items.push(productToSearchEntry(p)));
+      } catch (error) {
+        console.warn("Search product index:", error);
+      }
 
       try {
         await ensureServicesLoaded();
@@ -2989,12 +3021,25 @@
         renderSearchResults(resultsEl, []);
         return;
       }
-      const filtered = searchIndexCache.filter(
-        (item) =>
-          (item.label || "").toLowerCase().includes(q) ||
-          (item.url || "").toLowerCase().includes(q) ||
-          (item.section || "").toLowerCase().includes(q)
-      );
+      const filtered = searchIndexCache.filter((item) => {
+        const label = (item.label || "").toLowerCase();
+        const section = (item.section || "").toLowerCase();
+        const subtitle = (item.subtitle || "").toLowerCase();
+        const keywords = (item.keywords || "").toLowerCase();
+        const url = (item.url || "").toLowerCase();
+        return (
+          label.includes(q) ||
+          section.includes(q) ||
+          subtitle.includes(q) ||
+          keywords.includes(q) ||
+          url.includes(q)
+        );
+      });
+      filtered.sort((a, b) => {
+        if (a.type === "product" && b.type !== "product") return -1;
+        if (b.type === "product" && a.type !== "product") return 1;
+        return (a.label || "").localeCompare(b.label || "");
+      });
       renderSearchResults(resultsEl, filtered);
     }
 
