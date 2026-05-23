@@ -201,19 +201,45 @@
     .dd .has-dd .dd { top: -6px; left: 100%; margin-left: 6px; }
 
     .nav-search-btn {
+      display: none;
+    }
+
+    .site-search-trigger {
+      flex: 1;
+      max-width: 320px;
+      margin: 0 1.25rem 0 1.5rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      min-width: 0;
       background: rgba(240, 232, 213, 0.07);
       border: 1px solid rgba(240, 232, 213, 0.15);
-      color: rgba(240, 232, 213, 0.5);
+      color: rgba(240, 232, 213, 0.45);
       font-family: var(--font-type);
-      font-size: 12px;
-      padding: 7px 13px;
+      font-size: 13px;
+      padding: 9px 14px;
       cursor: pointer;
       transition: var(--ease);
+      text-align: left;
     }
-    .nav-search-btn:hover { background: rgba(240, 232, 213, 0.11); color: var(--parchment); border-color: var(--tan); }
+    .site-search-trigger:hover,
+    .site-search-trigger:focus-visible {
+      background: rgba(240, 232, 213, 0.11);
+      color: rgba(240, 232, 213, 0.7);
+      border-color: var(--tan);
+      outline: none;
+    }
+    .site-search-trigger svg { flex-shrink: 0; opacity: 0.55; }
+    .site-search-trigger span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .site-search-kbd {
+      flex-shrink: 0;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 2px 6px;
+      border: 1px solid rgba(240, 232, 213, 0.15);
+      border-radius: 4px;
+      color: rgba(240, 232, 213, 0.35);
+    }
     .nav-quote {
       background: var(--red);
       color: var(--parchment) !important;
@@ -458,6 +484,7 @@
       margin-top: 4px;
     }
     .hero-reel { display: flex; flex-direction: column; gap: 12px; position: relative; }
+    .hero-reel-stack { display: flex; flex-direction: column; gap: 12px; }
     .reel-card {
       background: rgba(240, 232, 213, 0.04);
       border: 1px solid rgba(240, 232, 213, 0.1);
@@ -539,26 +566,6 @@
     }
 
     .cats-sec { background: var(--parchment); padding: 6rem 0; }
-    .cat-search-row {
-      display: flex; gap: 0; margin: 2.5rem 0 3rem;
-      border: 1.5px solid rgba(26, 18, 8, 0.2);
-      background: white;
-    }
-    .cat-search-row input {
-      flex: 1; background: none; border: none; outline: none;
-      font-family: var(--font-type); font-size: 15px;
-      color: var(--ink); padding: 14px 18px;
-      letter-spacing: 0.03em;
-    }
-    .cat-search-row input::placeholder { color: rgba(26, 18, 8, 0.3); }
-    .cat-search-row button {
-      background: var(--red); color: var(--parchment);
-      border: none; padding: 0 24px;
-      font-family: var(--font-body); font-size: 12px; font-weight: 700;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      cursor: pointer; transition: background var(--ease);
-    }
-    .cat-search-row button:hover { background: var(--red-dim); }
     .cat-grid {
       display: grid; grid-template-columns: repeat(4, 1fr);
       gap: 0; border: 1.5px solid rgba(26, 18, 8, 0.15);
@@ -812,17 +819,7 @@
       letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: var(--ease);
     }
     .products-page .sb-apply:hover { background: var(--red); }
-    .products-page .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; flex-wrap: wrap; }
-    .products-page .search-bar {
-      flex: 1; min-width: 200px; display: flex; align-items: center; gap: 10px;
-      background: white; border: 1.5px solid rgba(26, 18, 8, 0.15); padding: 10px 14px;
-    }
-    .products-page .search-bar:focus-within { border-color: var(--red); }
-    .products-page .search-bar input {
-      flex: 1; background: none; border: none; outline: none; font-family: var(--font-type);
-      font-size: 14px; color: var(--ink);
-    }
-    .products-page .search-bar input::placeholder { color: rgba(26, 18, 8, 0.3); }
+    .products-page .toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 2rem; flex-wrap: wrap; }
     .products-page .sort-sel {
       padding: 10px 14px; border: 1.5px solid rgba(26, 18, 8, 0.15); background: white;
       font-family: var(--font-type); font-size: 13px; color: var(--ink); outline: none; cursor: pointer;
@@ -1051,7 +1048,9 @@
       .product-detail { grid-template-columns: 1fr; }
     }
     @media (max-width: 780px) {
-      .nav-links, .nav-search-btn { display: none; }
+      .nav-links { display: none; }
+      .site-search-trigger { margin: 0 0.75rem 0 auto; max-width: none; padding: 8px 12px; font-size: 12px; }
+      .site-search-kbd { display: none; }
       .hamburger { display: flex; }
       .hero-content { padding: 0 2rem; }
       .hero-film-strip, .hero-film-strip-right { display: none; }
@@ -1079,6 +1078,11 @@
           <span class="logo-name-sub">Est. Lexington, KY - Prop Rentals</span>
         </div>
       </a>
+      <button type="button" class="site-search-trigger" onclick="openSearch()" aria-label="Search site">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span>Search any prop, era, or style…</span>
+        <span class="site-search-kbd">Ctrl K</span>
+      </button>
       <div class="nav-links">
         <a id="home-link" href="/">Home</a>
         <a id="about-link" href="/about">About</a>
@@ -1091,9 +1095,6 @@
           <div class="dd" id="services-menu-desktop"></div>
         </div>
         <a id="contact-link" href="/contact">Contact</a>
-        <button class="nav-search-btn" type="button" onclick="openSearch()">
-          <span>Search</span>
-        </button>
         <a class="nav-quote" href="/contact">Request Quote</a>
       </div>
       <button class="hamburger" id="hamburger" type="button" onclick="toggleMenu()">
@@ -1151,33 +1152,7 @@
           </div>
           <div class="hero-reel">
             <div style="font-family:var(--font-type);font-size:10px;color:var(--tan);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;opacity:0.6;">Featured inventory</div>
-            <a class="reel-card" href="/products">
-              <span class="reel-frame-num">FR 001</span>
-              <div class="reel-icon">Car</div>
-              <div class="reel-info">
-                <div class="reel-name">1967 Ford Mustang</div>
-                <div class="reel-meta">Automotive - 1960s</div>
-              </div>
-              <div class="reel-price">$350</div>
-            </a>
-            <a class="reel-card" href="/products">
-              <span class="reel-frame-num">FR 002</span>
-              <div class="reel-icon">Chair</div>
-              <div class="reel-info">
-                <div class="reel-name">Victorian Parlor Set</div>
-                <div class="reel-meta">Furniture - Victorian</div>
-              </div>
-              <div class="reel-price">$180</div>
-            </a>
-            <a class="reel-card" href="/products">
-              <span class="reel-frame-num">FR 003</span>
-              <div class="reel-icon">Light</div>
-              <div class="reel-info">
-                <div class="reel-name">Art Deco Chandelier</div>
-                <div class="reel-meta">Lighting - 1930s</div>
-              </div>
-              <div class="reel-price">$220</div>
-            </a>
+            <div id="hero-featured-reel" class="hero-reel-stack" aria-live="polite"></div>
           </div>
         </div>
       </section>
@@ -1213,10 +1188,6 @@
             <div class="eyebrow">Browse the inventory</div>
             <h2>Every Prop.<br>Every Era.</h2>
             <p class="sub-text">3,000+ pieces spanning Victorian to contemporary. If a set decorator or a bride can dream it, we've probably got it.</p>
-          </div>
-          <div class="cat-search-row">
-            <input type="text" placeholder="Search by prop name, era, or aesthetic..." onfocus="openSearch()" readonly />
-            <button type="button" onclick="openSearch()">Search</button>
           </div>
           <div class="cat-grid" id="home-category-grid">
             <a class="cat-tile" href="/products/automotive">
@@ -2213,6 +2184,81 @@
       return null;
     }
 
+    function escHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function shuffleArray(items) {
+      const arr = items.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function reelCategoryLabel(product) {
+      const cat = product?.category?.name || "";
+      if (!cat) return "Prop";
+      const word = cat.split(/\s+/)[0];
+      return word.length > 12 ? word.slice(0, 10) : word;
+    }
+
+    function reelMetaLine(product) {
+      const cat = product?.category?.name || "Props";
+      const era =
+        product?.era ||
+        product?.decade ||
+        (Array.isArray(product?.tags) && product.tags[0]) ||
+        product?.shortDescription ||
+        "";
+      const eraShort = String(era).trim().slice(0, 32);
+      return eraShort ? `${cat} - ${eraShort}` : cat;
+    }
+
+    function renderHeroReelCard(product, index) {
+      const slug = product?.slug;
+      const href = slug ? `/products/p/${encodeURIComponent(slug)}` : "/products";
+      const price = getProductPrice(product);
+      const priceLabel = price !== null ? `$${Math.round(price)}` : "Quote";
+      const frameNum = product?.sku || `FR ${String(index + 1).padStart(3, "0")}`;
+      const accentStyle = index === 2 ? ' style="border-left-color:var(--tan)"' : "";
+      return `
+        <a class="reel-card" href="${escHtml(href)}"${accentStyle}>
+          <span class="reel-frame-num">${escHtml(frameNum)}</span>
+          <div class="reel-icon">${escHtml(reelCategoryLabel(product))}</div>
+          <div class="reel-info">
+            <div class="reel-name">${escHtml(product?.name || "Untitled")}</div>
+            <div class="reel-meta">${escHtml(reelMetaLine(product))}</div>
+          </div>
+          <div class="reel-price">${escHtml(priceLabel)}</div>
+        </a>
+      `;
+    }
+
+    async function loadHeroFeaturedInventory() {
+      const root = document.getElementById("hero-featured-reel");
+      if (!root) return;
+      root.innerHTML = '<div class="reel-card" style="pointer-events:none;opacity:0.5;"><div class="reel-info"><div class="reel-name">Loading inventory…</div></div></div>';
+      try {
+        const payload = await fetchPublicProductsList({ limit: 100, offset: 0 });
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        if (!items.length) {
+          root.innerHTML = "";
+          return;
+        }
+        const picked = shuffleArray(items).slice(0, 3);
+        root.innerHTML = picked.map((product, index) => renderHeroReelCard(product, index)).join("");
+      } catch (error) {
+        console.warn("Hero featured inventory:", error);
+        root.innerHTML = "";
+      }
+    }
+
     function renderProductsHero(title, subtitle) {
       return `
         <div class="products-page">
@@ -2277,10 +2323,6 @@
     function renderProductsToolbar() {
       return `
         <div class="toolbar">
-          <div class="search-bar">
-            <svg width="14" height="14" fill="none" stroke="rgba(26,18,8,0.35)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" placeholder="Search by name or category..." id="productsSearchInput" oninput="applyProductsFilters()" />
-          </div>
           <span class="results-label" id="productsResultsLabel">Showing all</span>
         </div>
       `;
@@ -2321,7 +2363,7 @@
         <div class="no-results">
           <div class="no-results-icon">🎬</div>
           <div class="no-results-title">No Props Found</div>
-          <p style="font-family:var(--font-type);font-size:13px;color:var(--tan-dim);letter-spacing:0.08em;">Try adjusting your filters or search term.</p>
+          <p style="font-family:var(--font-type);font-size:13px;color:var(--tan-dim);letter-spacing:0.08em;">Try adjusting sidebar filters, or use search in the nav bar.</p>
         </div>
       `;
     }
@@ -2334,23 +2376,19 @@
 
     function applyProductsFilters() {
       if (!window.productsPageState) return;
-      const query = (document.getElementById("productsSearchInput")?.value || "").toLowerCase().trim();
       const availOnly = Boolean(document.getElementById("availOnly")?.checked);
       const minP = parseFloat(document.getElementById("priceMin")?.value || "0") || 0;
       const maxP = parseFloat(document.getElementById("priceMax")?.value || "99999") || 99999;
       const list = window.productsPageState.allItems || [];
-      const hasFilters = Boolean(query || availOnly || minP > 0 || maxP < 99999);
+      const hasFilters = Boolean(availOnly || minP > 0 || maxP < 99999);
 
       let filtered = list.filter((product) => {
-        const name = String(product.name || "").toLowerCase();
-        const cat = String(product.category?.name || "").toLowerCase();
-        const matchesQuery = !query || name.includes(query) || cat.includes(query);
         const price = getProductPrice(product);
         const priceVal = price === null ? 0 : price;
         const matchesPrice = priceVal >= minP && priceVal <= maxP;
         const isAvailable = product.inStock || product.allowBackorder || product.isAvailable;
         const matchesAvail = !availOnly || Boolean(isAvailable);
-        return matchesQuery && matchesPrice && matchesAvail;
+        return matchesPrice && matchesAvail;
       });
 
       const container = document.getElementById("productsContainer");
@@ -2698,6 +2736,7 @@
         document.documentElement.classList.remove("is-inner");
         if (homeSections) homeSections.classList.remove("hidden");
         if (pageShell) pageShell.classList.add("hidden");
+        void loadHeroFeaturedInventory();
         setMetaTags({
           title: "Home",
           description: "Premium prop rentals for film, TV, weddings, home staging, and events across Kentucky.",
@@ -2897,7 +2936,7 @@
         await ensureProductsLoaded();
         flattenForSearch(productsCatalogCache, "Products", items);
         const params = getTenantQueryParams();
-        const prodRes = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}&limit=100`);
+        const prodRes = await fetch(`${API_BASE_URL}${PRODUCTS_LIST_ENDPOINT}?${params.toString()}&limit=200`);
         if (prodRes.ok) {
           const data = await prodRes.json();
           const prods = data?.items || [];
@@ -2928,6 +2967,7 @@
       const overlay = document.getElementById("searchOverlay");
       if (!overlay) return;
       overlay.classList.add("open");
+      if (!searchIndexCache.length) void buildSearchIndex();
       setTimeout(() => document.getElementById("searchInput")?.focus(), 80);
       doSearch("");
     }
